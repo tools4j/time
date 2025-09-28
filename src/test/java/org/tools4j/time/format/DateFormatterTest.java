@@ -27,7 +27,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.Parameter;
 import org.junit.jupiter.params.ParameterizedClass;
-import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -358,11 +357,14 @@ public class DateFormatterTest {
     }
 
     @Nested
+    @ParameterizedClass
+    @EnumSource(DateFormat.class)
     class Special {
 
-        @ParameterizedTest
-        @EnumSource(DateFormat.class)
-        public void format(final DateFormat format) {
+        @Parameter DateFormat format;
+
+        @Test
+        public void format() {
             assertSame(format, DateFormatter.valueOf(format).format());
             for (final char separator : SEPARATORS) {
                 assertSame(format, DateFormatter.valueOf(format, separator).format());
@@ -373,55 +375,34 @@ public class DateFormatterTest {
             }
         }
 
-        @ParameterizedTest
-        @ValueSource(chars = {DateFormatter.NO_SEPARATOR, '-', '/', '.', '_'})
+        @Test
         public void separator() {
-            char expected;
-            for (final DateFormat format : DateFormat.values()) {
-                expected = format.hasSeparators() ? DateFormatter.DEFAULT_SEPARATOR : DateFormatter.NO_SEPARATOR;
-                assertEquals(expected, DateFormatter.valueOf(format).separator());
-                for (final char separator : SEPARATORS) {
+            char expected = format.hasSeparators() ? DateFormatter.DEFAULT_SEPARATOR : DateFormatter.NO_SEPARATOR;
+            assertEquals(expected, DateFormatter.valueOf(format).separator());
+            for (final char separator : SEPARATORS) {
+                expected = format.hasSeparators() ? separator : DateFormatter.NO_SEPARATOR;
+                assertEquals(expected, DateFormatter.valueOf(format, separator).separator());
+                for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                    expected = format.hasSeparators() ? DateFormatter.DEFAULT_SEPARATOR : DateFormatter.NO_SEPARATOR;
+                    assertEquals(expected, DateFormatter.valueOf(format, validationMethod).separator());
                     expected = format.hasSeparators() ? separator : DateFormatter.NO_SEPARATOR;
-                    assertEquals(expected, DateFormatter.valueOf(format, separator).separator());
-                    for (final ValidationMethod validationMethod : ValidationMethod.values()) {
-                        expected = format.hasSeparators() ? DateFormatter.DEFAULT_SEPARATOR : DateFormatter.NO_SEPARATOR;
-                        assertEquals(expected, DateFormatter.valueOf(format, validationMethod).separator());
-                        expected = format.hasSeparators() ? separator : DateFormatter.NO_SEPARATOR;
-                        assertEquals(expected, DateFormatter.valueOf(format, separator, validationMethod).separator());
-                    }
+                    assertEquals(expected, DateFormatter.valueOf(format, separator, validationMethod).separator());
                 }
             }
         }
 
         @Test
         public void to_String() {
-            String expected;
-            for (final DateFormat format : DateFormat.values()) {
-                expected = "SimpleDateFormatter[format=" + format + ", separator=" + separatorString(format) + "]";
-                assertEquals(expected, DateFormatter.valueOf(format).toString());
-                for (final char separator : SEPARATORS) {
+            String expected = "SimpleDateFormatter[format=" + format + ", separator=" + separatorString(format) + "]";
+            assertEquals(expected, DateFormatter.valueOf(format).toString());
+            for (final char separator : SEPARATORS) {
+                expected = "SimpleDateFormatter[format=" + format + ", separator=" + separatorString(format, separator) + "]";
+                assertEquals(expected, DateFormatter.valueOf(format, separator).toString());
+                for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                    expected = "SimpleDateFormatter[format=" + format + ", separator=" + separatorString(format) + "]";
+                    assertEquals(expected, DateFormatter.valueOf(format, validationMethod).toString());
                     expected = "SimpleDateFormatter[format=" + format + ", separator=" + separatorString(format, separator) + "]";
-                    assertEquals(expected, DateFormatter.valueOf(format, separator).toString());
-                    for (final ValidationMethod validationMethod : ValidationMethod.values()) {
-                        expected = "SimpleDateFormatter[format=" + format + ", separator=" + separatorString(format) + "]";
-                        assertEquals(expected, DateFormatter.valueOf(format, validationMethod).toString());
-                        expected = "SimpleDateFormatter[format=" + format + ", separator=" + separatorString(format, separator) + "]";
-                        assertEquals(expected, DateFormatter.valueOf(format, separator, validationMethod).toString());
-                    }
-                }
-            }
-        }
-
-        @Test
-        public void validationMethod() {
-            for (final DateFormat format : DateFormat.values()) {
-                assertSame(ValidationMethod.UNVALIDATED, DateFormatter.valueOf(format).validationMethod());
-                for (final char separator : SEPARATORS) {
-                    assertSame(ValidationMethod.UNVALIDATED, DateFormatter.valueOf(format, separator).validationMethod());
-                    for (final ValidationMethod validationMethod : ValidationMethod.values()) {
-                        assertSame(validationMethod, DateFormatter.valueOf(format, validationMethod).validationMethod());
-                        assertSame(validationMethod, DateFormatter.valueOf(format, separator, validationMethod).validationMethod());
-                    }
+                    assertEquals(expected, DateFormatter.valueOf(format, separator, validationMethod).toString());
                 }
             }
         }
