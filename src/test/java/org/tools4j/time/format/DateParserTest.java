@@ -1,7 +1,7 @@
-/**
+/*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2025 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,9 +23,13 @@
  */
 package org.tools4j.time.format;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.tools4j.spockito.Spockito;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.Parameter;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.tools4j.time.pack.DatePacker;
 import org.tools4j.time.pack.Packing;
 import org.tools4j.time.validate.DateValidator;
@@ -38,7 +42,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.EnumMap;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Unit test for {@link DateParser}.
@@ -50,135 +60,138 @@ public class DateParserTest {
     private static final Map<DateFormat, String> PATTERN_BY_FORMAT = patternByFormat();
     private static final DateParser[] PARSERS = initParsers();
 
-    @RunWith(Spockito.class)
-    @Spockito.Unroll({
-            "|  localDate |",
-            "| 2017-01-01 |",
-            "| 2017-01-31 |",
-            "| 2017-02-28 |",
-            "| 2017-03-31 |",
-            "| 2017-04-30 |",
-            "| 2017-05-31 |",
-            "| 2017-06-30 |",
-            "| 2017-07-31 |",
-            "| 2017-08-31 |",
-            "| 2017-09-30 |",
-            "| 2017-10-31 |",
-            "| 2017-11-30 |",
-            "| 2017-12-31 |",
-            "| 2017-12-31 |",
-            "| 2016-02-29 |",
-            "| 2000-02-29 |",
-            "| 1900-02-28 |",
-            "| 1970-01-01 |",
-            "| 1970-01-02 |",
-            "| 1969-12-31 |",
-            "| 1969-12-30 |",
-            "| 1969-04-30 |",
-            "| 1968-02-28 |",
-            "| 1600-02-29 |",
-            "| 0004-02-29 |",
-            "| 0100-02-28 |",
-            "| 0400-02-29 |",
-            "| 0001-01-01 |",
-            "| 9999-12-31 |",
+    @Nested
+    @ParameterizedClass
+    @ValueSource(strings = {
+            "2017-01-01",
+            "2017-01-31",
+            "2017-02-28",
+            "2017-03-31",
+            "2017-04-30",
+            "2017-05-31",
+            "2017-06-30",
+            "2017-07-31",
+            "2017-08-31",
+            "2017-09-30",
+            "2017-10-31",
+            "2017-11-30",
+            "2017-12-31",
+            "2017-12-31",
+            "2016-02-29",
+            "2000-02-29",
+            "1900-02-28",
+            "1970-01-01",
+            "1970-01-02",
+            "1969-12-31",
+            "1969-12-30",
+            "1969-04-30",
+            "1968-02-28",
+            "1600-02-29",
+            "0004-02-29",
+            "0100-02-28",
+            "0400-02-29",
+            "0001-01-01",
+            "9999-12-31",
     })
-    public static class Valid {
+    class Valid {
+        
+        @Parameter LocalDate localDate;
+        
         @Test
-        public void parseYear(final LocalDate localDate) throws Exception {
+        public void parseYear() {
             for (final DateParser parser : PARSERS) {
                 final String input = formatInput(parser, localDate);
-                assertEquals("input=" + input, localDate.getYear(), parser.parseYear(input));
-                assertEquals("input=" + input, localDate.getYear(), parser.parseYear(input, AsciiReader.CHAR_SEQUENCE));
-                assertEquals("input=BLA" + input, localDate.getYear(), parser.parseYear("BLA" + input, 3));
+                assertEquals(localDate.getYear(), parser.parseYear(input), "input=" + input);
+                assertEquals(localDate.getYear(), parser.parseYear(input, AsciiReader.CHAR_SEQUENCE), "input=" + input);
+                assertEquals(localDate.getYear(), parser.parseYear("BLA" + input, 3), "input=BLA" + input);
             }
         }
 
         @Test
-        public void parseMonth(final LocalDate localDate) throws Exception {
+        public void parseMonth() {
             for (final DateParser parser : PARSERS) {
                 final String input = formatInput(parser, localDate);
-                assertEquals("input=" + input, localDate.getMonthValue(), parser.parseMonth(input));
-                assertEquals("input=" + input, localDate.getMonthValue(), parser.parseMonth(input, AsciiReader.CHAR_SEQUENCE));
-                assertEquals("input=BLA" + input, localDate.getMonthValue(), parser.parseMonth("BLA" + input, 3));
+                assertEquals(localDate.getMonthValue(), parser.parseMonth(input), "input=" + input);
+                assertEquals(localDate.getMonthValue(), parser.parseMonth(input, AsciiReader.CHAR_SEQUENCE), "input=" + input);
+                assertEquals(localDate.getMonthValue(), parser.parseMonth("BLA" + input, 3), "input=BLA" + input);
             }
         }
 
         @Test
-        public void parseDay(final LocalDate localDate) throws Exception {
+        public void parseDay() {
             for (final DateParser parser : PARSERS) {
                 final String input = formatInput(parser, localDate);
-                assertEquals("input=" + input, localDate.getDayOfMonth(), parser.parseDay(input));
-                assertEquals("input=" + input, localDate.getDayOfMonth(), parser.parseDay(input, AsciiReader.CHAR_SEQUENCE));
-                assertEquals("input=BLA" + input, localDate.getDayOfMonth(), parser.parseDay("BLA" + input, 3));
+                assertEquals(localDate.getDayOfMonth(), parser.parseDay(input), "input=" + input);
+                assertEquals(localDate.getDayOfMonth(), parser.parseDay(input, AsciiReader.CHAR_SEQUENCE), "input=" + input);
+                assertEquals(localDate.getDayOfMonth(), parser.parseDay("BLA" + input, 3), "input=BLA" + input);
             }
         }
 
         @Test
-        public void parseAsPackedDate(final LocalDate localDate) throws Exception {
+        public void parseAsPackedDate() {
             for (final DateParser parser : PARSERS) {
                 final String input = formatInput(parser, localDate);
                 for (final Packing packing : Packing.values()) {
                     final int expected = DatePacker.valueOf(packing).pack(localDate);
-                    assertEquals("input=" + input, expected, parser.parseAsPackedDate(input, packing));
-                    assertEquals("input=" + input, expected, parser.parseAsPackedDate(input, AsciiReader.CHAR_SEQUENCE, packing));
-                    assertEquals("input=BLA" + input, expected, parser.parseAsPackedDate("BLA" + input, 3, packing));
+                    assertEquals(expected, parser.parseAsPackedDate(input, packing), "input=" + input);
+                    assertEquals(expected, parser.parseAsPackedDate(input, AsciiReader.CHAR_SEQUENCE, packing), "input=" + input);
+                    assertEquals(expected, parser.parseAsPackedDate("BLA" + input, 3, packing), "input=BLA" + input);
                 }
             }
         }
 
         @Test
-        public void parseAsEpochDay(final LocalDate localDate) throws Exception {
+        public void parseAsEpochDay() {
             for (final DateParser parser : PARSERS) {
                 final long epochDay = localDate.toEpochDay();
                 final String input = formatInput(parser, localDate);
-                assertEquals("input=" + input, epochDay, parser.parseAsEpochDay(input));
-                assertEquals("input=" + input, epochDay, parser.parseAsEpochDay(input, AsciiReader.CHAR_SEQUENCE));
-                assertEquals("input=BLA" + input, epochDay, parser.parseAsEpochDay("BLA" + input, 3));
+                assertEquals(epochDay, parser.parseAsEpochDay(input), "input=" + input);
+                assertEquals(epochDay, parser.parseAsEpochDay(input, AsciiReader.CHAR_SEQUENCE), "input=" + input);
+                assertEquals(epochDay, parser.parseAsEpochDay("BLA" + input, 3), "input=BLA" + input);
             }
         }
 
         @Test
-        public void parseAsEpochMilli(final LocalDate localDate) throws Exception {
+        public void parseAsEpochMilli() {
             for (final DateParser parser : PARSERS) {
                 final long epochMilli = localDate.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
                 final String input = formatInput(parser, localDate);
-                assertEquals("input=" + input, epochMilli, parser.parseAsEpochMilli(input));
-                assertEquals("input=" + input, epochMilli, parser.parseAsEpochMilli(input, AsciiReader.CHAR_SEQUENCE));
-                assertEquals("input=BLA" + input, epochMilli, parser.parseAsEpochMilli("BLA" + input, 3));
-                assertEquals("input=BLABLA" + input, epochMilli, parser.parseAsEpochMilli("BLABLA" + input, AsciiReader.CHAR_SEQUENCE, 6));
+                assertEquals(epochMilli, parser.parseAsEpochMilli(input), "input=" + input);
+                assertEquals(epochMilli, parser.parseAsEpochMilli(input, AsciiReader.CHAR_SEQUENCE), "input=" + input);
+                assertEquals(epochMilli, parser.parseAsEpochMilli("BLA" + input, 3), "input=BLA" + input);
+                assertEquals(epochMilli, parser.parseAsEpochMilli("BLABLA" + input, AsciiReader.CHAR_SEQUENCE, 6), "input=BLABLA" + input);
             }
         }
 
         @Test
-        public void parseAsLocalDate(final LocalDate localDate) throws Exception {
+        public void parseAsLocalDate() {
             for (final DateParser parser : PARSERS) {
                 final String input = formatInput(parser, localDate);
-                assertEquals("input=" + input, localDate, parser.parseAsLocalDate(input));
-                assertEquals("input=" + input, localDate, parser.parseAsLocalDate(input, AsciiReader.CHAR_SEQUENCE));
-                assertEquals("input=BLA" + input, localDate, parser.parseAsLocalDate("BLA" + input, 3));
+                assertEquals(localDate, parser.parseAsLocalDate(input), "input=" + input);
+                assertEquals(localDate, parser.parseAsLocalDate(input, AsciiReader.CHAR_SEQUENCE), "input=" + input);
+                assertEquals(localDate, parser.parseAsLocalDate("BLA" + input, 3), "input=BLA" + input);
             }
         }
 
         @Test
-        public void parseSeparator(final LocalDate localDate) throws Exception {
+        public void parseSeparator() {
             for (final DateParser parser : PARSERS) {
                 final String input = formatInput(parser, localDate);
                 for (int sep = 0; sep <= 1; sep++) {
-                    assertEquals("input=" + input, parser.separator(), parser.parseSeparator(input, sep));
-                    assertEquals("input=" + input, parser.separator(), parser.parseSeparator(input, AsciiReader.CHAR_SEQUENCE, sep));
-                    assertEquals("input=BLA" + input, parser.separator(), parser.parseSeparator("BLA" + input, 3, sep));
+                    assertEquals(parser.separator(), parser.parseSeparator(input, sep), "input=" + input);
+                    assertEquals(parser.separator(), parser.parseSeparator(input, AsciiReader.CHAR_SEQUENCE, sep), "input=" + input);
+                    assertEquals(parser.separator(), parser.parseSeparator("BLA" + input, 3, sep), "input=BLA" + input);
                 }
             }
         }
 
         @Test
-        public void isValid(final LocalDate localDate) throws Exception {
+        public void isValid() {
             for (final DateParser parser : PARSERS) {
                 final String input = formatInput(parser, localDate);
-                assertTrue("input=" + input, parser.isValid(input));
-                assertTrue("input=" + input, parser.isValid(input, AsciiReader.CHAR_SEQUENCE));
-                assertTrue("input=BLA" + input, parser.isValid("BLA" + input, 3));
+                assertTrue(parser.isValid(input), "input=" + input);
+                assertTrue(parser.isValid(input, AsciiReader.CHAR_SEQUENCE), "input=" + input);
+                assertTrue(parser.isValid("BLA" + input, 3), "input=BLA" + input);
             }
         }
 
@@ -189,37 +202,44 @@ public class DateParserTest {
             return formatter.format(localDate);
         }
     }
-    
+
+    @SuppressWarnings("unused")
     enum InvalidPart {
         YEAR, MONTH, DAY, SEPARATOR
     }
 
-    @RunWith(Spockito.class)
-    @Spockito.Unroll({
-            "|  year | month | day | invalidPart |",
-            "|     0 |    1  |   1 |     YEAR    |",
-            "|    -1 |    1  |   1 |     YEAR    |",
-            "|  -999 |    1  |   1 |     YEAR    |",
-            "|  2017 |    0  |   1 |    MONTH    |",
-            "|  2017 |   -1  |   1 |    MONTH    |",
-            "|  2017 |   13  |   1 |    MONTH    |",
-            "|  2017 |    1  |   0 |     DAY     |",
-            "|  2017 |    4  |  -1 |     DAY     |",//NOTE: day=-1 is equivalent to day=31
-            "|  2017 |    1  |  32 |     DAY     |",
-            "|  2017 |    2  |  29 |     DAY     |",
-            "|  2016 |    2  |  30 |     DAY     |",
-            "|  2000 |    2  |  30 |     DAY     |",
-            "|  1900 |    2  |  29 |     DAY     |",
-            "|  1900 |    4  |  31 |     DAY     |",
-            "|  1900 |    6  |  31 |     DAY     |",
-            "|  1900 |    9  |  31 |     DAY     |",
-            "|  1900 |   11  |  31 |     DAY     |",
-            "|  1900 |   11  |  30 |  SEPARATOR  |",
+    @Nested
+    @ParameterizedClass
+    @CsvSource(delimiter = '|', value = {
+          //"  year | month | day | invalidPart ",
+            "     0 |    1  |   1 |     YEAR    ",
+            "    -1 |    1  |   1 |     YEAR    ",
+            "  -999 |    1  |   1 |     YEAR    ",
+            "  2017 |    0  |   1 |    MONTH    ",
+            "  2017 |   -1  |   1 |    MONTH    ",
+            "  2017 |   13  |   1 |    MONTH    ",
+            "  2017 |    1  |   0 |     DAY     ",
+            "  2017 |    4  |  -1 |     DAY     |",//NOTE: day=-1 is equivalent to day31
+            "  2017 |    1  |  32 |     DAY     ",
+            "  2017 |    2  |  29 |     DAY     ",
+            "  2016 |    2  |  30 |     DAY     ",
+            "  2000 |    2  |  30 |     DAY     ",
+            "  1900 |    2  |  29 |     DAY     ",
+            "  1900 |    4  |  31 |     DAY     ",
+            "  1900 |    6  |  31 |     DAY     ",
+            "  1900 |    9  |  31 |     DAY     ",
+            "  1900 |   11  |  31 |     DAY     ",
+            "  1900 |   11  |  30 |  SEPARATOR  ",
     })
-    @Spockito.Name("[{row}]: {year}/{month}/{day}, invalidPart={invalidPart}")
-    public static class Invalid {
+    class Invalid {
+
+        @Parameter(0) int year;
+        @Parameter(1) int month;
+        @Parameter(2) int day;
+        @Parameter(3) InvalidPart invalidPart;
+
         @Test
-        public void parseYear(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
+        public void parseYear() {
             final boolean isInvalid = invalidPart == InvalidPart.YEAR;
             for (final DateParser parser : PARSERS) {
                 final String input = formatInput(parser, year, month, day, invalidPart);
@@ -233,13 +253,13 @@ public class DateParserTest {
                 if (isInvalid) {
                     assertValue(parser, input, exception, result);
                 } else {
-                    assertEquals("Wrong year for input=" + input, year, result);
+                    assertEquals(year, result, "Wrong year for input=" + input);
                 }
             }
         }
 
         @Test
-        public void parseMonth(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
+        public void parseMonth() {
             final boolean isInvalid = invalidPart == InvalidPart.MONTH;
             for (final DateParser parser : PARSERS) {
                 final String input = formatInput(parser, year, month, day, invalidPart);
@@ -253,13 +273,13 @@ public class DateParserTest {
                 if (isInvalid) {
                     assertValue(parser, input, exception, result);
                 } else {
-                    assertEquals("Wrong month for input=" + input, month, result);
+                    assertEquals(month, result, "Wrong month for input=" + input);
                 }
             }
         }
 
         @Test
-        public void parseDay(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
+        public void parseDay() {
             final boolean isInvalid = invalidPart != InvalidPart.SEPARATOR;
             for (final DateParser parser : PARSERS) {
                 final String input = formatInput(parser, year, month, day, invalidPart);
@@ -273,13 +293,13 @@ public class DateParserTest {
                 if (isInvalid) {
                     assertValue(parser, input, exception, result);
                 } else {
-                    assertEquals("Wrong day for input=" + input, day, result);
+                    assertEquals(day, result, "Wrong day for input=" + input);
                 }
             }
         }
 
         @Test
-        public void parseAsPackedDate(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
+        public void parseAsPackedDate() {
             for (final DateParser parser : PARSERS) {
                 final String input = formatInput(parser, year, month, day, invalidPart);
                 for (final Packing packing : Packing.values()) {
@@ -298,7 +318,7 @@ public class DateParserTest {
         }
 
         @Test
-        public void parseAsEpochDay(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
+        public void parseAsEpochDay() {
             for (final DateParser parser : PARSERS) {
                 final String input = formatInput(parser, year, month, day, invalidPart);
                 DateTimeException exception = null;
@@ -315,7 +335,7 @@ public class DateParserTest {
         }
 
         @Test
-        public void parseAsEpochMilli(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
+        public void parseAsEpochMilli() {
             for (final DateParser parser : PARSERS) {
                 final String input = formatInput(parser, year, month, day, invalidPart);
                 DateTimeException exception = null;
@@ -332,11 +352,11 @@ public class DateParserTest {
         }
 
         @Test
-        public void parseAsLocalDate(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
+        public void parseAsLocalDate() {
             for (final DateParser parser : PARSERS) {
                 final boolean shouldFail =
                         invalidPart != InvalidPart.SEPARATOR ||
-                        invalidPart == InvalidPart.SEPARATOR && parser.validationMethod() != ValidationMethod.UNVALIDATED &&
+                        parser.validationMethod() != ValidationMethod.UNVALIDATED &&
                                 (parser.format().hasSeparators() && parser.separator() != DateParser.NO_SEPARATOR);
 
                 final String input = formatInput(parser, year, month, day, invalidPart);
@@ -356,7 +376,7 @@ public class DateParserTest {
         }
 
         @Test
-        public void parseSeparator(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
+        public void parseSeparator() {
             for (final DateParser parser : PARSERS) {
                 final String input = formatInput(parser, year, month, day, invalidPart);
                 for (int sep = 0; sep <= 1; sep++) {
@@ -373,20 +393,20 @@ public class DateParserTest {
                         final char expected = parser.format().hasSeparators() ?
                                 (invalidPart == InvalidPart.SEPARATOR ? BAD_SEPARATOR : parser.separator()) :
                                 DateParser.NO_SEPARATOR;
-                        assertEquals("input=" + input + ", parser=" + parser, expected, result);
+                        assertEquals(expected, result, "input=" + input + ", parser=" + parser);
                     }
                 }
             }
         }
 
         @Test
-        public void isValid(final int year, final int month, final int day, final InvalidPart invalidPart) throws Exception {
+        public void isValid() {
             for (final DateParser parser : PARSERS) {
                 final boolean isValid = isValid(parser, invalidPart);
                 final String input = formatInput(parser, year, month, day, invalidPart);
-                assertEquals("input=" + input + ", parser=" + parser, isValid, parser.isValid(input));
-                assertEquals("input=" + input + ", parser=" + parser, isValid, parser.isValid(input, AsciiReader.CHAR_SEQUENCE));
-                assertEquals("input=BLA" + input + ", parser=" + parser, isValid, parser.isValid("BLA" + input, 3));
+                assertEquals(isValid, parser.isValid(input), "input=" + input + ", parser=" + parser);
+                assertEquals(isValid, parser.isValid(input, AsciiReader.CHAR_SEQUENCE), "input=" + input + ", parser=" + parser);
+                assertEquals(isValid, parser.isValid("BLA" + input, 3), "input=BLA" + input + ", parser=" + parser);
             }
         }
 
@@ -412,20 +432,20 @@ public class DateParserTest {
                                          final long result, final long invalidValue) {
             switch (parser.validationMethod()) {
                 case UNVALIDATED:
-                    assertNull("Unvalidating parser should not throw an exception for input='" +
-                            input + "' and parser=" + parser, exception);
-                    assertNotEquals("Unvalidating parser should not return INVALID for input='" +
-                            input + "' and parser=" + parser, invalidValue, result);
+                    assertNull(exception, "Unvalidating parser should not throw an exception for input='" +
+                            input + "' and parser=" + parser);
+                    assertNotEquals(invalidValue, result, "Unvalidating parser should not return INVALID for input='" +
+                            input + "' and parser=" + parser);
                     break;
                 case INVALIDATE_RESULT:
-                    assertNull("Invalidate-result parser should not throw an exception for input='" +
-                            input + "' and parser=" + parser, exception);
-                    assertEquals("Invalidate-result parser should return INVALID for input='" +
-                            input + "' and parser=" + parser, invalidValue, result);
+                    assertNull(exception, "Invalidate-result parser should not throw an exception for input='" +
+                            input + "' and parser=" + parser);
+                    assertEquals(invalidValue, result, "Invalidate-result parser should return INVALID for input='" +
+                            input + "' and parser=" + parser);
                     break;
                 case THROW_EXCEPTION:
-                    assertNotNull("Throw-exception parser should throw an exception for input='" +
-                            input + "' and parser=" + parser, exception);
+                    assertNotNull(exception, "Throw-exception parser should throw an exception for input='" +
+                            input + "' and parser=" + parser);
                     break;
                 default:
                     throw new RuntimeException("Unsupported validation method: " + parser.validationMethod());
@@ -443,7 +463,7 @@ public class DateParserTest {
                     .replace("dd", toFixedLength(2, day));
         }
 
-        private static final String toFixedLength(final int length, final int value) {
+        private static String toFixedLength(final int length, final int value) {
             final StringBuilder sb = new StringBuilder(length);
             sb.append(value);
             while (sb.length() < length) {
@@ -453,72 +473,69 @@ public class DateParserTest {
         }
     }
 
-    public static class Special {
+    @Nested
+    @ParameterizedClass
+    @EnumSource(DateFormat.class)
+    class Special {
+
+        @Parameter DateFormat format;
+
         @Test
-        public void format() throws Exception {
-            for (final DateFormat format : DateFormat.values()) {
-                assertSame(format, DateParser.valueOf(format).format());
-                for (final char separator : SEPARATORS) {
-                    assertSame(format, DateParser.valueOf(format, separator).format());
-                    for (final ValidationMethod validationMethod : ValidationMethod.values()) {
-                        assertSame(format, DateParser.valueOf(format, validationMethod).format());
-                        assertSame(format, DateParser.valueOf(format, separator, validationMethod).format());
-                    }
+        public void format() {
+            assertSame(format, DateParser.valueOf(format).format());
+            for (final char separator : SEPARATORS) {
+                assertSame(format, DateParser.valueOf(format, separator).format());
+                for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                    assertSame(format, DateParser.valueOf(format, validationMethod).format());
+                    assertSame(format, DateParser.valueOf(format, separator, validationMethod).format());
                 }
             }
         }
 
         @Test
-        public void separator() throws Exception {
-            char expected;
-            for (final DateFormat format : DateFormat.values()) {
-                expected = format.hasSeparators() ? DateParser.DEFAULT_SEPARATOR : DateParser.NO_SEPARATOR;
-                assertEquals(expected, DateParser.valueOf(format).separator());
-                for (final char separator : SEPARATORS) {
+        public void separator() {
+            char expected = format.hasSeparators() ? DateParser.DEFAULT_SEPARATOR : DateParser.NO_SEPARATOR;
+            assertEquals(DateParser.valueOf(format).separator(), expected);
+            for (final char separator : SEPARATORS) {
+                expected = format.hasSeparators() ? separator : DateParser.NO_SEPARATOR;
+                assertEquals(DateParser.valueOf(format, separator).separator(), expected);
+                for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                    expected = format.hasSeparators() ? DateParser.DEFAULT_SEPARATOR : DateParser.NO_SEPARATOR;
+                    assertEquals(DateParser.valueOf(format, validationMethod).separator(), expected);
                     expected = format.hasSeparators() ? separator : DateParser.NO_SEPARATOR;
-                    assertEquals(expected, DateParser.valueOf(format, separator).separator());
-                    for (final ValidationMethod validationMethod : ValidationMethod.values()) {
-                        expected = format.hasSeparators() ? DateParser.DEFAULT_SEPARATOR : DateParser.NO_SEPARATOR;
-                        assertEquals(expected, DateParser.valueOf(format, validationMethod).separator());
-                        expected = format.hasSeparators() ? separator : DateParser.NO_SEPARATOR;
-                        assertEquals(expected, DateParser.valueOf(format, separator, validationMethod).separator());
-                    }
+                    assertEquals(DateParser.valueOf(format, separator, validationMethod).separator(), expected);
                 }
             }
         }
 
         @Test
-        public void validationMethod() throws Exception {
-            for (final DateFormat format : DateFormat.values()) {
-                assertSame(ValidationMethod.UNVALIDATED, DateParser.valueOf(format).validationMethod());
-                for (final char separator : SEPARATORS) {
-                    assertSame(ValidationMethod.UNVALIDATED, DateParser.valueOf(format, separator).validationMethod());
-                    for (final ValidationMethod validationMethod : ValidationMethod.values()) {
-                        assertSame(validationMethod, DateParser.valueOf(format, validationMethod).validationMethod());
-                        assertSame(validationMethod, DateParser.valueOf(format, separator, validationMethod).validationMethod());
-                    }
+        public void validationMethod() {
+            assertSame(ValidationMethod.UNVALIDATED, DateParser.valueOf(format).validationMethod());
+            for (final char separator : SEPARATORS) {
+                assertSame(ValidationMethod.UNVALIDATED, DateParser.valueOf(format, separator).validationMethod());
+                for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                    assertSame(validationMethod, DateParser.valueOf(format, validationMethod).validationMethod());
+                    assertSame(validationMethod, DateParser.valueOf(format, separator, validationMethod).validationMethod());
                 }
             }
         }
 
         @Test
-        public void to_String() throws Exception {
+        public void to_String() {
             String expected;
-            for (final DateFormat format : DateFormat.values()) {
-                expected = "SimpleDateParser[format=" + format + ", separator=" + separatorString(format) + "]";
-                assertEquals(expected, DateParser.valueOf(format).toString());
-                for (final char separator : SEPARATORS) {
-                    expected = "SimpleDateParser[format=" + format + ", separator=" + separatorString(format, separator) + "]";
-                    assertEquals(expected, DateParser.valueOf(format, separator).toString());
-                    for (final ValidationMethod validationMethod : ValidationMethod.values()) {
-                        final String master = validationMethod == ValidationMethod.UNVALIDATED ? "" +
-                                "SimpleDateParser[format=%s, separator=%s]" :
-                                "ValidatingDateParser[format=%s, separator=%s, validationMethod=%s]";
-                        expected = String.format(master, format, separatorString(format), validationMethod);
-                        assertEquals(expected, DateParser.valueOf(format, validationMethod).toString());
-                        expected = String.format(master, format, separatorString(format, separator), validationMethod);
-                        assertEquals(expected, DateParser.valueOf(format, separator, validationMethod).toString());
-                    }
+            expected = "SimpleDateParser[format=" + format + ", separator=" + separatorString(format) + "]";
+            assertEquals(DateParser.valueOf(format).toString(), expected);
+            for (final char separator : SEPARATORS) {
+                expected = "SimpleDateParser[format=" + format + ", separator=" + separatorString(format, separator) + "]";
+                assertEquals(DateParser.valueOf(format, separator).toString(), expected);
+                for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                    final String master = validationMethod == ValidationMethod.UNVALIDATED
+                            ? "SimpleDateParser[format=%s, separator=%s]"
+                            : "ValidatingDateParser[format=%s, separator=%s, validationMethod=%s]";
+                    expected = String.format(master, format, separatorString(format), validationMethod);
+                    assertEquals(DateParser.valueOf(format, validationMethod).toString(), expected);
+                    expected = String.format(master, format, separatorString(format, separator), validationMethod);
+                    assertEquals(DateParser.valueOf(format, separator, validationMethod).toString(), expected);
                 }
             }
         }

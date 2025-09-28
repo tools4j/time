@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2025 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,8 @@
  */
 package org.tools4j.time.format;
 
+import org.tools4j.time.base.Allocation;
 import org.tools4j.time.base.Epoch;
-import org.tools4j.time.base.Garbage;
 import org.tools4j.time.pack.DatePacker;
 import org.tools4j.time.pack.Packing;
 import org.tools4j.time.validate.DateValidator;
@@ -33,7 +33,10 @@ import org.tools4j.time.zone.Zone;
 
 import java.time.LocalDate;
 
-import static org.tools4j.time.base.TimeFactors.*;
+import static org.tools4j.time.base.Allocation.Type.RESULT;
+import static org.tools4j.time.base.TimeFactors.MILLIS_PER_DAY;
+import static org.tools4j.time.base.TimeFactors.MILLIS_PER_SECOND;
+import static org.tools4j.time.base.TimeFactors.SECONDS_PER_DAY;
 
 public interface DateFormatter {
     int INVALID = DateValidator.INVALID;
@@ -87,7 +90,7 @@ public interface DateFormatter {
      * @return a cached formatter instance for {@link #NO_SEPARATOR} or standard separators '-', '/' and '.'; and otherwise
      *         a newly created formatter instance
      */
-    @Garbage(value = Garbage.Type.RESULT, rare = true, text="new instance only for format with non-standard separator char")
+    @Allocation(value = RESULT, rare = true, text="new instance only for format with non-standard separator char")
     static DateFormatter valueOf(final DateFormat format, final char separatorChar) {
         return valueOf(format, separatorChar, ValidationMethod.UNVALIDATED);
     }
@@ -112,7 +115,7 @@ public interface DateFormatter {
      * @return a cached formatter instance for {@link #NO_SEPARATOR} or standard separators '-', '/' and '.'; and otherwise
      *         a newly created formatter instance
      */
-    @Garbage(value = Garbage.Type.RESULT, rare = true, text="new instance only for format with non-standard separator char")
+    @Allocation(value = RESULT, rare = true, text="new instance only for format with non-standard separator char")
     static DateFormatter valueOf(final DateFormat format, final char separatorChar, final ValidationMethod validationMethod) {
         return Instances.valueOf(format, separatorChar, validationMethod);
     }

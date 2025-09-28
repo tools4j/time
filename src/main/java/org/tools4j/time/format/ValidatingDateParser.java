@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2025 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,8 @@
  */
 package org.tools4j.time.format;
 
+import org.tools4j.time.base.Allocation;
 import org.tools4j.time.base.Epoch;
-import org.tools4j.time.base.Garbage;
 import org.tools4j.time.pack.DatePacker;
 import org.tools4j.time.pack.Packing;
 import org.tools4j.time.validate.DateValidator;
@@ -33,6 +33,8 @@ import org.tools4j.time.validate.ValidationMethod;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.util.Objects;
+
+import static org.tools4j.time.base.Allocation.Type.RESULT;
 
 final class ValidatingDateParser implements DateParser.Default {
 
@@ -127,7 +129,7 @@ final class ValidatingDateParser implements DateParser.Default {
         final int year = parseYear(source, reader, offset);
         final int month = parseMonth(source, reader, offset);
         final int day = parseDay(source, reader, offset);
-        if (year != INVALID & month != INVALID & day != INVALID & hasValidSepatators(source, reader, offset)) {
+        if (year != INVALID & month != INVALID & day != INVALID & hasValidSeparators(source, reader, offset)) {
             return DatePacker.valueOf(packing).pack(year, month, day);
         }
         return invalid(INVALID, "Invalid separator char in date string: ", source, reader, offset);
@@ -138,20 +140,20 @@ final class ValidatingDateParser implements DateParser.Default {
         final int year = parseYear(source, reader, offset);
         final int month = parseMonth(source, reader, offset);
         final int day = parseDay(source, reader, offset);
-        if (hasValidSepatators(source, reader, offset)) {
+        if (hasValidSeparators(source, reader, offset)) {
             return Epoch.valueOf(ValidationMethod.UNVALIDATED).toEpochDay(year, month, day);
         }
         return invalidEpoch(INVALID_EPOCH, "Invalid separator char in date string: ", source, reader, offset);
     }
 
-    @Garbage(Garbage.Type.RESULT)
+    @Allocation(RESULT)
     @Override
     public <S> LocalDate parseAsLocalDate(final S source, final AsciiReader<? super S> reader, final int offset) {
         final int year = parseYear(source, reader, offset);
         final int month = parseMonth(source, reader, offset);
         final int day = parseDay(source, reader, offset);
         DateValidator.THROW_EXCEPTION.validateDay(year, month, day);
-        if (hasValidSepatators(source, reader, offset)) {
+        if (hasValidSeparators(source, reader, offset)) {
             return LocalDate.of(year, month, day);
         }
         throw new DateTimeException(toString("Invalid separator char in date string: ", source, reader, offset, format().length()));
@@ -178,19 +180,13 @@ final class ValidatingDateParser implements DateParser.Default {
     static <S> boolean isValid(final DateFormat format, final byte separatorChar,
                                final S source, final AsciiReader<? super S> reader, final int offset) {
         final int day = toDay(ValidationMethod.INVALIDATE_RESULT, format, source, reader, offset);
-        if (day == INVALID) {
-            return false;
-        }
-        if (!hasValidSepatators(format, separatorChar, source, reader, offset)) {
-            return false;
-        }
-        return true;
+        return day != INVALID && hasValidSeparators(format, separatorChar, source, reader, offset);
     }
 
-    private <S> boolean hasValidSepatators(final S source, final AsciiReader<? super S> reader, final int offset) {
-        return hasValidSepatators(format(), separator, source, reader, offset);
+    private <S> boolean hasValidSeparators(final S source, final AsciiReader<? super S> reader, final int offset) {
+        return hasValidSeparators(format(), separator, source, reader, offset);
     }
-    private static <S> boolean hasValidSepatators(final DateFormat format, final byte separatorChar,
+    private static <S> boolean hasValidSeparators(final DateFormat format, final byte separatorChar,
                                                   final S source, final AsciiReader<? super S> reader, final int offset) {
         if (separatorChar == (byte)NO_SEPARATOR) {
             return true;
@@ -245,7 +241,7 @@ final class ValidatingDateParser implements DateParser.Default {
         }
     }
 
-    @Garbage(Garbage.Type.RESULT)
+    @Allocation(RESULT)
     private static <S> String toString(final String prefix,
                                        final S source, final AsciiReader<? super S> reader, final int offset,
                                        final int length) {

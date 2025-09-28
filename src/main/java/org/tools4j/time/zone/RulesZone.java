@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2025 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -157,6 +157,7 @@ final class RulesZone implements Zone {
     /**
      * @see ZoneRules#getOffsetInfo(LocalDateTime)
      */
+    @SuppressWarnings("JavadocReference")
     private ZoneOffset getOffsetAtOrBefore(final int zoneYear, final int zoneMonth, final int zoneDay,
                                            final int zoneHour, final int zoneMinute, final int zoneSecond, final int zoneNano) {
         if (savingsInstantTransitions.length == 0) {
@@ -210,7 +211,7 @@ final class RulesZone implements Zone {
 //                return new ZoneOffsetTransition(dtAfter, offsetBefore, offsetAfter);//NOTE garbage
 //            }
         } else {
-            // normal (neither gap or overlap)
+            // normal (neither gap nor overlap)
             return wallOffsets[index / 2 + 1];
         }
     }
@@ -218,6 +219,7 @@ final class RulesZone implements Zone {
     /**
      * @see ZoneRules#findOffsetInfo(LocalDateTime, ZoneOffsetTransition)
      */
+    @SuppressWarnings("JavadocReference")
     private Object findOffsetInfo(final int zoneYear, final int zoneMonth, final int zoneDay,
                                   final int zoneHour, final int zoneMinute, final int zoneSecond, final int zoneNano,
                                   final ZoneOffsetTransition trans) {

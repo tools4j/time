@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2025 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,13 +23,15 @@
  */
 package org.tools4j.time.pack;
 
+import org.tools4j.time.base.Allocation;
 import org.tools4j.time.base.Epoch;
-import org.tools4j.time.base.Garbage;
 import org.tools4j.time.validate.DateValidator;
 import org.tools4j.time.validate.ValidationMethod;
 
 import java.time.LocalDate;
 import java.util.Objects;
+
+import static org.tools4j.time.base.Allocation.Type.RESULT;
 
 /**
  * Packs a date (year, month, day) into an integer.  Packing and unpacking can be done with or without date validation
@@ -42,7 +44,7 @@ import java.util.Objects;
  * <ul>
  *     <li>{@link #DECIMAL} packing for a date 21-Jan-2017 is 20170121</li>
  *     <li>{@link #BINARY} packing uses shifts to pack the date parts which is more efficient but the result is not
- *     easily human readable</li>
+ *     easily human-readable</li>
  * </ul>
  * @see #valueOf(Packing, ValidationMethod)
  * @see #BINARY
@@ -63,7 +65,7 @@ public interface DatePacker {
     int packNull();
     boolean unpackNull(int packed);
     int pack(LocalDate localDate);
-    @Garbage(Garbage.Type.RESULT)
+    @Allocation(RESULT)
     LocalDate unpackLocalDate(int packed);
     int packEpochDay(long daysSinceEpoch);
     long unpackEpochDay(int packed);
@@ -121,7 +123,7 @@ public interface DatePacker {
         }
 
         @Override
-        @Garbage(Garbage.Type.RESULT)
+        @Allocation(RESULT)
         default LocalDate unpackLocalDate(final int packed) {
             return unpackNull(packed) ? null : LocalDate.of(
                     unpackYear(packed), unpackMonth(packed), unpackDay(packed)

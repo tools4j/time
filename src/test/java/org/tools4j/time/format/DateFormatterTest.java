@@ -1,7 +1,7 @@
-/**
+/*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2025 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,9 +23,14 @@
  */
 package org.tools4j.time.format;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.tools4j.spockito.Spockito;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.Parameter;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.tools4j.time.base.Epoch;
 import org.tools4j.time.base.TimeFactors;
 import org.tools4j.time.pack.DatePacker;
@@ -39,7 +44,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.EnumMap;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.tools4j.time.format.AsciiWriter.STRING_BUILDER;
 import static org.tools4j.time.format.DateParserTest.separatorString;
 
 /**
@@ -48,156 +58,151 @@ import static org.tools4j.time.format.DateParserTest.separatorString;
 public class DateFormatterTest {
 
     private static final char[] SEPARATORS = {DateFormatter.NO_SEPARATOR, '-', '/', '.', '_'};
-    private static final char BAD_SEPARATOR = ':';
     private static final Map<DateFormat, String> PATTERN_BY_FORMAT = patternByFormat();
     private static final DateFormatter[] FORMATTERS = initFormatters();
 
-    @RunWith(Spockito.class)
-    @Spockito.Unroll({
-            "|  localDate |",
-            "| 2017-01-01 |",
-            "| 2017-01-31 |",
-            "| 2017-02-28 |",
-            "| 2017-03-31 |",
-            "| 2017-04-30 |",
-            "| 2017-05-31 |",
-            "| 2017-06-30 |",
-            "| 2017-07-31 |",
-            "| 2017-08-31 |",
-            "| 2017-09-30 |",
-            "| 2017-10-31 |",
-            "| 2017-11-30 |",
-            "| 2017-12-31 |",
-            "| 2017-12-31 |",
-            "| 2016-02-29 |",
-            "| 2000-02-29 |",
-            "| 1900-02-28 |",
-            "| 1970-01-01 |",
-            "| 1970-01-02 |",
-            "| 1969-12-31 |",
-            "| 1969-12-30 |",
-            "| 1969-04-30 |",
-            "| 1968-02-28 |",
-            "| 1600-02-29 |",
-            "| 0004-02-29 |",
-            "| 0100-02-28 |",
-            "| 0400-02-29 |",
-            "| 0001-01-01 |",
-            "| 9999-12-31 |",
+    @Nested
+    @ParameterizedClass
+    @ValueSource(strings = {
+            "2017-01-01",
+            "2017-01-31",
+            "2017-02-28",
+            "2017-03-31",
+            "2017-04-30",
+            "2017-05-31",
+            "2017-06-30",
+            "2017-07-31",
+            "2017-08-31",
+            "2017-09-30",
+            "2017-10-31",
+            "2017-11-30",
+            "2017-12-31",
+            "2017-12-31",
+            "2016-02-29",
+            "2000-02-29",
+            "1900-02-28",
+            "1970-01-01",
+            "1970-01-02",
+            "1969-12-31",
+            "1969-12-30",
+            "1969-04-30",
+            "1968-02-28",
+            "1600-02-29",
+            "0004-02-29",
+            "0100-02-28",
+            "0400-02-29",
+            "0001-01-01",
+            "9999-12-31",
     })
-    public static class Valid {
+    class Valid {
+
+        @Parameter LocalDate localDate;
+
         @Test
-        public void format(final LocalDate localDate) throws Exception {
+        public void format() {
             for (final DateFormatter formatter : FORMATTERS) {
-                final int len = formatter.format().length();
                 final String expected = expected(formatter, localDate);
                 final StringBuilder actual1 = new StringBuilder();
                 formatter.format(localDate.getYear(), localDate.getMonthValue(), localDate.getDayOfMonth(),
                         actual1);
-                assertEquals("input=" + localDate, expected, actual1.toString());
+                assertEquals(expected, actual1.toString(), "input=" + localDate);
                 final StringBuilder actual2 = new StringBuilder("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
                 formatter.format(localDate.getYear(), localDate.getMonthValue(), localDate.getDayOfMonth(),
-                        actual2, AsciiWriter.STRING_BUILDER);
-                assertEquals("input=" + localDate, expected + "ABCDEFGHIJKLMNOPQRSTUVWXYZ".substring(expected.length()),
-                        actual2.toString());
+                        actual2, STRING_BUILDER);
+                assertEquals(expected + "ABCDEFGHIJKLMNOPQRSTUVWXYZ".substring(expected.length()),
+                        actual2.toString(), "input=" + localDate);
                 final StringBuilder actual3 = new StringBuilder("ABCDE");
                 formatter.format(localDate.getYear(), localDate.getMonthValue(), localDate.getDayOfMonth(),
-                        actual3, AsciiWriter.STRING_BUILDER, 3);
-                assertEquals("input=" + localDate, "ABC" + expected, actual3.toString());
+                        actual3, STRING_BUILDER, 3);
+                assertEquals("ABC" + expected, actual3.toString(), "input=" + localDate);
             }
         }
 
         @Test
-        public void formatPackedDate(final LocalDate localDate) throws Exception {
+        public void formatPackedDate() {
             for (final DateFormatter formatter : FORMATTERS) {
                 final int len = formatter.format().length();
                 for (final Packing packing : Packing.values()) {
                     final String expected = expected(formatter, localDate);
                     final int packed = DatePacker.valueOf(packing).pack(localDate);
                     final StringBuilder actual1 = new StringBuilder();
-                    assertEquals("format=" + formatter.format(), len,
-                            formatter.formatPackedDate(packed, packing, actual1));
-                    assertEquals("input=" + localDate, expected, actual1.toString());
+                    assertEquals(len, formatter.formatPackedDate(packed, packing, actual1),
+                            "format=" + formatter.format());
+                    assertEquals(expected, actual1.toString(), "input=" + localDate);
                     final StringBuilder actual2 = new StringBuilder("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-                    assertEquals("format=" + formatter.format(), len,
-                            formatter.formatPackedDate(packed, packing, actual2, AsciiWriter.STRING_BUILDER));
-                    assertEquals("input=" + localDate,
-                            expected + "ABCDEFGHIJKLMNOPQRSTUVWXYZ".substring(expected.length()),
-                            actual2.toString());
+                    assertEquals(len, formatter.formatPackedDate(packed, packing, actual2, STRING_BUILDER),
+                            "format=" + formatter.format());
+                    assertEquals(expected + "ABCDEFGHIJKLMNOPQRSTUVWXYZ".substring(expected.length()),
+                            actual2.toString(), "input=" + localDate);
                     final StringBuilder actual3 = new StringBuilder("ABCDE");
-                    assertEquals("format=" + formatter.format(), len,
-                            formatter.formatPackedDate(packed, packing, actual3, AsciiWriter.STRING_BUILDER, 3));
-                    assertEquals("input=" + localDate, "ABC" + expected, actual3.toString());
+                    assertEquals(len,
+                            formatter.formatPackedDate(packed, packing, actual3, STRING_BUILDER, 3), "format=" + formatter.format());
+                    assertEquals("ABC" + expected, actual3.toString(), "input=" + localDate);
                 }
             }
         }
 
         @Test
-        public void formatEpochDay(final LocalDate localDate) throws Exception {
+        public void formatEpochDay() {
             for (final DateFormatter formatter : FORMATTERS) {
                 final int len = formatter.format().length();
                 final String expected = expected(formatter, localDate);
                 final StringBuilder actual1 = new StringBuilder();
-                assertEquals("format=" + formatter.format(), len,
-                        formatter.formatEpochDay(localDate.toEpochDay(), actual1));
-                assertEquals("input=" + localDate, expected, actual1.toString());
+                assertEquals(len, formatter.formatEpochDay(localDate.toEpochDay(), actual1),
+                        "format=" + formatter.format());
+                assertEquals(expected, actual1.toString(), "input=" + localDate);
                 final StringBuilder actual2 = new StringBuilder("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-                assertEquals("format=" + formatter.format(), len,
-                        formatter.formatEpochDay(localDate.toEpochDay(),
-                                actual2, AsciiWriter.STRING_BUILDER));
-                assertEquals("input=" + localDate,
-                        expected + "ABCDEFGHIJKLMNOPQRSTUVWXYZ".substring(expected.length()),
-                        actual2.toString());
+                assertEquals(len, formatter.formatEpochDay(localDate.toEpochDay(), actual2, STRING_BUILDER),
+                        "format=" + formatter.format());
+                assertEquals(expected + "ABCDEFGHIJKLMNOPQRSTUVWXYZ".substring(expected.length()),
+                        actual2.toString(), "input=" + localDate);
                 final StringBuilder actual3 = new StringBuilder("ABCDE");
-                assertEquals("format=" + formatter.format(), len,
-                        formatter.formatEpochDay(localDate.toEpochDay(),
-                                actual3, AsciiWriter.STRING_BUILDER, 3));
-                assertEquals("input=" + localDate, "ABC" + expected, actual3.toString());
+                assertEquals(len, formatter.formatEpochDay(localDate.toEpochDay(), actual3, STRING_BUILDER, 3),
+                        "format=" + formatter.format());
+                assertEquals("ABC" + expected, actual3.toString(), "input=" + localDate);
             }
         }
 
         @Test
-        public void formatEpochMilli(final LocalDate localDate) throws Exception {
+        public void formatEpochMilli() {
             for (final DateFormatter formatter : FORMATTERS) {
                 final int len = formatter.format().length();
                 final String expected = expected(formatter, localDate);
                 final StringBuilder actual1 = new StringBuilder();
-                assertEquals("format=" + formatter.format(), len, formatter.formatEpochMilli(localDate.toEpochDay() * TimeFactors.MILLIS_PER_DAY, actual1));
-                assertEquals("input=" + localDate, expected, actual1.toString());
+                assertEquals(len, formatter.formatEpochMilli(localDate.toEpochDay() * TimeFactors.MILLIS_PER_DAY, actual1), "format=" + formatter.format());
+                assertEquals(expected, actual1.toString(), "input=" + localDate);
                 final StringBuilder actual2 = new StringBuilder("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-                assertEquals("format=" + formatter.format(), len,
+                assertEquals(len,
                         formatter.formatEpochMilli(localDate.toEpochDay() * TimeFactors.MILLIS_PER_DAY,
-                        actual2, AsciiWriter.STRING_BUILDER));
-                assertEquals("input=" + localDate,
-                        expected + "ABCDEFGHIJKLMNOPQRSTUVWXYZ".substring(expected.length()),
-                        actual2.toString());
+                                actual2, STRING_BUILDER), "format=" + formatter.format());
+                assertEquals(expected + "ABCDEFGHIJKLMNOPQRSTUVWXYZ".substring(expected.length()),
+                        actual2.toString(), "input=" + localDate);
                 final StringBuilder actual3 = new StringBuilder("ABCDE");
                 final int randomMillis = (int)(TimeFactors.MILLIS_PER_DAY * Math.random());
-                assertEquals("format=" + formatter.format(), len,
+                assertEquals(len,
                         formatter.formatEpochMilli(localDate.toEpochDay() * TimeFactors.MILLIS_PER_DAY + randomMillis,
-                        actual3, AsciiWriter.STRING_BUILDER, 3));
-                assertEquals("input=" + localDate, "ABC" + expected, actual3.toString());
+                                actual3, STRING_BUILDER, 3), "format=" + formatter.format());
+                assertEquals("ABC" + expected, actual3.toString(), "input=" + localDate);
             }
         }
 
         @Test
-        public void formatLocalDate(final LocalDate localDate) throws Exception {
+        public void formatLocalDate() {
             for (final DateFormatter formatter : FORMATTERS) {
                 final int len = formatter.format().length();
                 final String expected = expected(formatter, localDate);
                 final StringBuilder actual1 = new StringBuilder();
-                assertEquals("format=" + formatter.format(), len,
-                        formatter.formatLocalDate(localDate, actual1));
-                assertEquals("input=" + localDate, expected, actual1.toString());
+                assertEquals(len,
+                        formatter.formatLocalDate(localDate, actual1), "format=" + formatter.format());
+                assertEquals(expected, actual1.toString(), "input=" + localDate);
                 final StringBuilder actual2 = new StringBuilder("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-                assertEquals("format=" + formatter.format(), len,
-                        formatter.formatLocalDate(localDate, actual2, AsciiWriter.STRING_BUILDER));
-                assertEquals("input=" + localDate,
-                        expected + "ABCDEFGHIJKLMNOPQRSTUVWXYZ".substring(expected.length()),
-                        actual2.toString());
+                assertEquals(len,
+                        formatter.formatLocalDate(localDate, actual2, STRING_BUILDER), "format=" + formatter.format());
+                assertEquals(expected + "ABCDEFGHIJKLMNOPQRSTUVWXYZ".substring(expected.length()),
+                        actual2.toString(), "input=" + localDate);
                 final StringBuilder actual3 = new StringBuilder("ABCDE");
-                assertEquals("format=" + formatter.format(), len, formatter.formatLocalDate(localDate, actual3, AsciiWriter.STRING_BUILDER, 3));
-                assertEquals("input=" + localDate, "ABC" + expected, actual3.toString());
+                assertEquals(len, formatter.formatLocalDate(localDate, actual3, STRING_BUILDER, 3), "format=" + formatter.format());
+                assertEquals("ABC" + expected, actual3.toString(), "input=" + localDate);
             }
         }
 
@@ -209,32 +214,37 @@ public class DateFormatterTest {
         }
     }
 
-    @RunWith(Spockito.class)
-    @Spockito.Unroll({
-            "|  year | month | day |",
-            "|     0 |    1  |   1 |",
-            "|    -1 |    1  |   1 |",
-            "|  -999 |    1  |   1 |",
-            "|  2017 |    0  |   1 |",
-            "|  2017 |   -1  |   1 |",
-            "|  2017 |   13  |   1 |",
-            "|  2017 |    1  |   0 |",
-            "|  2017 |    2  |  -2 |",//NOTE: day=-2 is equivalent to day=30
-            "|  2017 |    1  |  32 |",
-            "|  2017 |    2  |  29 |",
-            "|  2016 |    2  |  30 |",
-            "|  2000 |    2  |  30 |",
-            "|  1900 |    2  |  29 |",
-            "|  1900 |    4  |  31 |",
-            "|  1900 |    6  |  31 |",
-            "|  1900 |    9  |  31 |",
-            "|  1900 |   11  |  31 |",
-            "| 10000 |    1  |   1 |",
+    @Nested
+    @ParameterizedClass
+    @CsvSource(delimiter = '|', value = {
+          //"  year | month | day ",
+            "     0 |    1  |   1 ",
+            "    -1 |    1  |   1 ",
+            "  -999 |    1  |   1 ",
+            "  2017 |    0  |   1 ",
+            "  2017 |   -1  |   1 ",
+            "  2017 |   13  |   1 ",
+            "  2017 |    1  |   0 ",
+            "  2017 |    2  |  -2 |",//NOTE: day=-2 is equivalent to day30
+            "  2017 |    1  |  32 ",
+            "  2017 |    2  |  29 ",
+            "  2016 |    2  |  30 ",
+            "  2000 |    2  |  30 ",
+            "  1900 |    2  |  29 ",
+            "  1900 |    4  |  31 ",
+            "  1900 |    6  |  31 ",
+            "  1900 |    9  |  31 ",
+            "  1900 |   11  |  31 ",
+            " 10000 |    1  |   1 ",
     })
-    @Spockito.Name("[{row}]: {year}/{month}/{day}")
-    public static class Invalid {
+    class Invalid {
+
+        @Parameter(0) int year;
+        @Parameter(1) int month;
+        @Parameter(2) int day;
+        
         @Test
-        public void format(final int year, final int month, final int day) throws Exception {
+        public void format() {
             for (final DateFormatter formatter : FORMATTERS) {
                 DateTimeException exception = null;
                 int result = 0;
@@ -249,7 +259,7 @@ public class DateFormatterTest {
         }
 
         @Test
-        public void formatPackedDate(final int year, final int month, final int day) throws Exception {
+        public void formatPackedDate() {
             for (final DateFormatter formatter : FORMATTERS) {
                 for (final Packing packing : Packing.values()) {
                     final int packedDate = DatePacker.valueOf(packing).pack(year, month, day);
@@ -267,7 +277,7 @@ public class DateFormatterTest {
         }
 
         @Test
-        public void formatEpochDay(final int year, final int month, final int day) throws Exception {
+        public void formatEpochDay() {
             if (!DateValidator.isValidYear(year)) {
                 final long epochDays = Epoch.valueOf(ValidationMethod.UNVALIDATED).toEpochDay(year, month, day);
                 for (final DateFormatter formatter : FORMATTERS) {
@@ -285,7 +295,7 @@ public class DateFormatterTest {
         }
 
         @Test
-        public void formatEpochMilli(final int year, final int month, final int day) throws Exception {
+        public void formatEpochMilli() {
             if (!DateValidator.isValidYear(year)) {
                 final long epochDays = Epoch.valueOf(ValidationMethod.UNVALIDATED).toEpochMilli(year, month, day);
                 for (final DateFormatter formatter : FORMATTERS) {
@@ -303,7 +313,7 @@ public class DateFormatterTest {
         }
 
         @Test
-        public void formatLocalDate(final int year, final int month, final int day) throws Exception {
+        public void formatLocalDate() {
             if (!DateValidator.isValidYear(year)) {
                 final LocalDate localDate = LocalDate.of(year, month, day);
                 for (final DateFormatter formatter : FORMATTERS) {
@@ -326,20 +336,20 @@ public class DateFormatterTest {
                                          final int result) {
             switch (formatter.validationMethod()) {
                 case UNVALIDATED:
-                    assertNull("Unvalidating formatter should not throw an exception for input='" +
-                            input + "' and formatter=" + formatter, exception);
-                    assertNotEquals("Unvalidating parser should not return INVALID for input='" +
-                            input + "' and formatter=" + formatter, DateFormatter.INVALID, result);
+                    assertNull(exception, "Unvalidating formatter should not throw an exception for input='" +
+                            input + "' and formatter=" + formatter);
+                    assertNotEquals(DateFormatter.INVALID, result, "Unvalidating parser should not return INVALID for input='" +
+                            input + "' and formatter=" + formatter);
                     break;
                 case INVALIDATE_RESULT:
-                    assertNull("Invalidate-result formatter should not throw an exception for input='" +
-                            input + "' and formatter=" + formatter, exception);
-                    assertEquals("Invalidate-result formatter should return INVALID for input='" +
-                            input + "' and formatter=" + formatter, DateFormatter.INVALID, result);
+                    assertNull(exception, "Invalidate-result formatter should not throw an exception for input='" +
+                            input + "' and formatter=" + formatter);
+                    assertEquals(DateFormatter.INVALID, result, "Invalidate-result formatter should return INVALID for input='" +
+                            input + "' and formatter=" + formatter);
                     break;
                 case THROW_EXCEPTION:
-                    assertNotNull("Throw-exception formatter should throw an exception for input='" +
-                            input + "' and formatter=" + formatter, exception);
+                    assertNotNull(exception, "Throw-exception formatter should throw an exception for input='" +
+                            input + "' and formatter=" + formatter);
                     break;
                 default:
                     throw new RuntimeException("Unsupported validation method: " + formatter.validationMethod());
@@ -347,23 +357,25 @@ public class DateFormatterTest {
         }
     }
 
-    public static class Special {
-        @Test
-        public void format() throws Exception {
-            for (final DateFormat format : DateFormat.values()) {
-                assertSame(format, DateFormatter.valueOf(format).format());
-                for (final char separator : SEPARATORS) {
-                    assertSame(format, DateFormatter.valueOf(format, separator).format());
-                    for (final ValidationMethod validationMethod : ValidationMethod.values()) {
-                        assertSame(format, DateFormatter.valueOf(format, validationMethod).format());
-                        assertSame(format, DateFormatter.valueOf(format, separator, validationMethod).format());
-                    }
+    @Nested
+    class Special {
+
+        @ParameterizedTest
+        @EnumSource(DateFormat.class)
+        public void format(final DateFormat format) {
+            assertSame(format, DateFormatter.valueOf(format).format());
+            for (final char separator : SEPARATORS) {
+                assertSame(format, DateFormatter.valueOf(format, separator).format());
+                for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                    assertSame(format, DateFormatter.valueOf(format, validationMethod).format());
+                    assertSame(format, DateFormatter.valueOf(format, separator, validationMethod).format());
                 }
             }
         }
 
-        @Test
-        public void separator() throws Exception {
+        @ParameterizedTest
+        @ValueSource(chars = {DateFormatter.NO_SEPARATOR, '-', '/', '.', '_'})
+        public void separator() {
             char expected;
             for (final DateFormat format : DateFormat.values()) {
                 expected = format.hasSeparators() ? DateFormatter.DEFAULT_SEPARATOR : DateFormatter.NO_SEPARATOR;
@@ -382,7 +394,7 @@ public class DateFormatterTest {
         }
 
         @Test
-        public void to_String() throws Exception {
+        public void to_String() {
             String expected;
             for (final DateFormat format : DateFormat.values()) {
                 expected = "SimpleDateFormatter[format=" + format + ", separator=" + separatorString(format) + "]";
@@ -401,7 +413,7 @@ public class DateFormatterTest {
         }
 
         @Test
-        public void validationMethod() throws Exception {
+        public void validationMethod() {
             for (final DateFormat format : DateFormat.values()) {
                 assertSame(ValidationMethod.UNVALIDATED, DateFormatter.valueOf(format).validationMethod());
                 for (final char separator : SEPARATORS) {

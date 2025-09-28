@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2025 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,8 @@
  */
 package org.tools4j.time.pack;
 
+import org.tools4j.time.base.Allocation;
 import org.tools4j.time.base.Epoch;
-import org.tools4j.time.base.Garbage;
 import org.tools4j.time.validate.DateValidator;
 import org.tools4j.time.validate.TimeValidator;
 import org.tools4j.time.validate.ValidationMethod;
@@ -34,6 +34,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Objects;
 
+import static org.tools4j.time.base.Allocation.Type.RESULT;
 import static org.tools4j.time.base.TimeFactors.MILLIS_PER_SECOND;
 import static org.tools4j.time.base.TimeFactors.NANOS_PER_MILLI;
 
@@ -48,7 +49,7 @@ import static org.tools4j.time.base.TimeFactors.NANOS_PER_MILLI;
  * <ul>
  *     <li>{@link #DECIMAL} packing for a date/time value 21-Jan-2017 14:15:16.170 is 20170121141516170</li>
  *     <li>{@link #BINARY} packing uses shifts to pack the date/time parts which is more efficient but the result is not
- *     easily human readable</li>
+ *     easily human-readable</li>
  * </ul>
  * @see #valueOf(Packing, ValidationMethod)
  * @see #BINARY
@@ -76,7 +77,7 @@ public interface DateTimePacker {
     boolean unpackNull(long packed);
     long pack(LocalDateTime localDateTime);
     long pack(LocalDate localDate, LocalTime localTime);
-    @Garbage(Garbage.Type.RESULT)
+    @Allocation(RESULT)
     LocalDateTime unpackLocalDateTime(long packed);
     long packEpochMilli(long millisSinceEpoch);
     long unpackEpochMilli(long packed);
@@ -165,7 +166,7 @@ public interface DateTimePacker {
         }
 
         @Override
-        @Garbage(Garbage.Type.RESULT)
+        @Allocation(RESULT)
         default LocalDateTime unpackLocalDateTime(final long packed) {
             return unpackNull(packed) ? null :
                     LocalDateTime.of(unpackYear(packed), unpackMonth(packed), unpackDay(packed),

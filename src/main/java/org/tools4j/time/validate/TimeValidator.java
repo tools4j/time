@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2025 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,12 @@ package org.tools4j.time.validate;
 
 import java.time.DateTimeException;
 
-import static org.tools4j.time.base.TimeFactors.*;
+import static org.tools4j.time.base.TimeFactors.HOURS_PER_DAY;
+import static org.tools4j.time.base.TimeFactors.MICROS_PER_SECOND;
+import static org.tools4j.time.base.TimeFactors.MILLIS_PER_SECOND;
+import static org.tools4j.time.base.TimeFactors.MINUTES_PER_HOUR;
+import static org.tools4j.time.base.TimeFactors.NANOS_PER_SECOND;
+import static org.tools4j.time.base.TimeFactors.SECONDS_PER_MINUTE;
 
 /**
  * Defines validators for time components.

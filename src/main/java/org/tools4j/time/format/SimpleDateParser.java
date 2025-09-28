@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2025 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,8 @@
  */
 package org.tools4j.time.format;
 
+import org.tools4j.time.base.Allocation;
 import org.tools4j.time.base.Epoch;
-import org.tools4j.time.base.Garbage;
 import org.tools4j.time.pack.DatePacker;
 import org.tools4j.time.pack.Packing;
 import org.tools4j.time.validate.DateValidator;
@@ -32,6 +32,8 @@ import org.tools4j.time.validate.ValidationMethod;
 
 import java.time.LocalDate;
 import java.util.Objects;
+
+import static org.tools4j.time.base.Allocation.Type.RESULT;
 
 final class SimpleDateParser implements DateParser.Default {
 
@@ -100,7 +102,7 @@ final class SimpleDateParser implements DateParser.Default {
         return Epoch.valueOf(ValidationMethod.UNVALIDATED).toEpochDay(year, month, day);
     }
 
-    @Garbage(Garbage.Type.RESULT)
+    @Allocation(RESULT)
     @Override
     public <S> LocalDate parseAsLocalDate(final S source, final AsciiReader<? super S> reader, final int offset) {
         final int year = parseYear(source, reader, offset);

@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2025 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,12 @@
  */
 package org.tools4j.time.base;
 
-import org.tools4j.time.pack.*;
+import org.tools4j.time.pack.DatePacker;
+import org.tools4j.time.pack.DateTimePacker;
+import org.tools4j.time.pack.MilliTimePacker;
+import org.tools4j.time.pack.NanoTimePacker;
+import org.tools4j.time.pack.Packing;
+import org.tools4j.time.pack.TimePacker;
 import org.tools4j.time.validate.DateValidator;
 import org.tools4j.time.validate.TimeValidator;
 import org.tools4j.time.validate.ValidationMethod;
@@ -31,8 +36,22 @@ import org.tools4j.time.validate.ValidationMethod;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import static org.tools4j.time.base.Allocation.Type.RESULT;
 import static org.tools4j.time.base.EpochImpl.divMod;
-import static org.tools4j.time.base.TimeFactors.*;
+import static org.tools4j.time.base.TimeFactors.HOURS_PER_DAY;
+import static org.tools4j.time.base.TimeFactors.MILLIS_PER_DAY;
+import static org.tools4j.time.base.TimeFactors.MILLIS_PER_HOUR;
+import static org.tools4j.time.base.TimeFactors.MILLIS_PER_MINUTE;
+import static org.tools4j.time.base.TimeFactors.MILLIS_PER_SECOND;
+import static org.tools4j.time.base.TimeFactors.MINUTES_PER_HOUR;
+import static org.tools4j.time.base.TimeFactors.NANOS_PER_DAY;
+import static org.tools4j.time.base.TimeFactors.NANOS_PER_HOUR;
+import static org.tools4j.time.base.TimeFactors.NANOS_PER_MILLI;
+import static org.tools4j.time.base.TimeFactors.NANOS_PER_MINUTE;
+import static org.tools4j.time.base.TimeFactors.NANOS_PER_SECOND;
+import static org.tools4j.time.base.TimeFactors.SECONDS_PER_DAY;
+import static org.tools4j.time.base.TimeFactors.SECONDS_PER_HOUR;
+import static org.tools4j.time.base.TimeFactors.SECONDS_PER_MINUTE;
 
 /**
  * Converts dates to days since epoch and vice versa.
@@ -64,24 +83,24 @@ public interface Epoch {
     long toEpochNano(final LocalDateTime localDateTime);
 
     int fromEpochDay(long daysSinceEpoch, DatePacker datePacker);
-    @Garbage(Garbage.Type.RESULT)
+    @Allocation(RESULT)
     LocalDate fromEpochDay(long daysSinceEpoch);
     int fromEpochSecond(long secondsSinceEpoch, DatePacker datePacker);
     int fromEpochSecond(long secondsSinceEpoch, TimePacker timePacker);
     int fromEpochSecond(long secondsSinceEpoch, MilliTimePacker milliTimePacker);
     long fromEpochSecond(long secondsSinceEpoch, NanoTimePacker nanoTimePacker);
     long fromEpochSecond(long secondsSinceEpoch, DateTimePacker dateTimePacker);
-    @Garbage(Garbage.Type.RESULT)
+    @Allocation(RESULT)
     LocalDateTime fromEpochSecond(long secondsSinceEpoch);
     int fromEpochMilli(long millisSinceEpoch, DatePacker datePacker);
     int fromEpochMilli(long millisSinceEpoch, MilliTimePacker milliTimePacker);
     long fromEpochMilli(long millisSinceEpoch, NanoTimePacker nanoTimePacker);
     long fromEpochMilli(long millisSinceEpoch, DateTimePacker dateTimePacker);
-    @Garbage(Garbage.Type.RESULT)
+    @Allocation(RESULT)
     LocalDateTime fromEpochMilli(long millisSinceEpoch);
     int fromEpochNano(long nanosSinceEpoch, DatePacker datePacker);
     long fromEpochNano(long nanosSinceEpoch, NanoTimePacker nanoTimePacker);
-    @Garbage(Garbage.Type.RESULT)
+    @Allocation(RESULT)
     LocalDateTime fromEpochNano(long nanosSinceEpoch);
 
     static Epoch valueOf(final ValidationMethod validationMethod) {
@@ -229,7 +248,7 @@ public interface Epoch {
         }
 
         @Override
-        @Garbage(Garbage.Type.RESULT)
+        @Allocation(RESULT)
         default LocalDate fromEpochDay(final long daysSinceEpoch) {
             final DatePacker packer = DatePacker.BINARY;
             final int packed = fromEpochDay(daysSinceEpoch, packer);
@@ -284,7 +303,7 @@ public interface Epoch {
         }
 
         @Override
-        @Garbage(Garbage.Type.RESULT)
+        @Allocation(RESULT)
         default LocalDateTime fromEpochSecond(final long secondsSinceEpoch) {
             final DateTimePacker packer = DateTimePacker.BINARY;
             final long packed = fromEpochSecond(secondsSinceEpoch, packer);
@@ -331,7 +350,7 @@ public interface Epoch {
         }
 
         @Override
-        @Garbage(Garbage.Type.RESULT)
+        @Allocation(RESULT)
         default LocalDateTime fromEpochMilli(final long millisSinceEpoch) {
             final DateTimePacker packer = DateTimePacker.BINARY;
             final long packed = fromEpochMilli(millisSinceEpoch, packer);
@@ -354,7 +373,7 @@ public interface Epoch {
         }
 
         @Override
-        @Garbage(Garbage.Type.RESULT)
+        @Allocation(RESULT)
         default LocalDateTime fromEpochNano(final long nanosSinceEpoch) {
             final DatePacker datePacker = DatePacker.BINARY;
             final NanoTimePacker timePacker = NanoTimePacker.BINARY;

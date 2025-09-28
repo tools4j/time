@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2025 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,5 +34,5 @@ public interface AsciiReader<S> {
     AsciiReader<char[]> CHAR_ARRAY = (a, i) -> (byte)a[i];
     AsciiReader<byte[]> BYTE_ARRAY = (a, i) -> a[i];
     AsciiReader<CharBuffer> CHAR_BUFFER = (b, i) -> (byte)b.get(i);
-    AsciiReader<ByteBuffer> BYTE_BUFFER = (b, i) -> b.get(i);
+    AsciiReader<ByteBuffer> BYTE_BUFFER = ByteBuffer::get;
 }

@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2025 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,15 +23,20 @@
  */
 package org.tools4j.time.pack;
 
+import org.tools4j.time.base.Allocation;
 import org.tools4j.time.base.Epoch;
-import org.tools4j.time.base.Garbage;
 import org.tools4j.time.validate.TimeValidator;
 import org.tools4j.time.validate.ValidationMethod;
 
 import java.time.LocalTime;
 import java.util.Objects;
 
-import static org.tools4j.time.base.TimeFactors.*;
+import static org.tools4j.time.base.Allocation.Type.RESULT;
+import static org.tools4j.time.base.TimeFactors.MILLIS_PER_HOUR;
+import static org.tools4j.time.base.TimeFactors.MILLIS_PER_MINUTE;
+import static org.tools4j.time.base.TimeFactors.MILLIS_PER_SECOND;
+import static org.tools4j.time.base.TimeFactors.SECONDS_PER_HOUR;
+import static org.tools4j.time.base.TimeFactors.SECONDS_PER_MINUTE;
 
 /**
  * Packs a time value (hour, minute, second) into an integer.  Packing and unpacking can be done with or without time
@@ -44,7 +49,7 @@ import static org.tools4j.time.base.TimeFactors.*;
  * <ul>
  *     <li>{@link #DECIMAL} packing for a time value 14:15:16 is 141516</li>
  *     <li>{@link #BINARY} packing uses shifts to pack the time parts which is more efficient but the result is not
- *     easily human readable</li>
+ *     easily human-readable</li>
  * </ul>
  * @see #valueOf(Packing, ValidationMethod)
  * @see #BINARY
@@ -64,7 +69,7 @@ public interface TimePacker {
     int packNull();
     boolean unpackNull(int packed);
     int pack(LocalTime localTime);
-    @Garbage(Garbage.Type.RESULT)
+    @Allocation(RESULT)
     LocalTime unpackLocalTime(int packed);
     int packEpochSecond(long secondsSinceEpoch);
     long unpackSecondOfDay(int packed);
@@ -121,7 +126,7 @@ public interface TimePacker {
         }
 
         @Override
-        @Garbage(Garbage.Type.RESULT)
+        @Allocation(RESULT)
         default LocalTime unpackLocalTime(final int packed) {
             return unpackNull(packed) ? null :
                     LocalTime.of(unpackHour(packed), unpackMinute(packed), unpackSecond(packed));

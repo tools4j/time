@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2025 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,11 +32,12 @@ import java.util.Objects;
 
 import static java.lang.Math.floorDiv;
 import static java.lang.Math.floorMod;
+import static org.tools4j.time.base.Allocation.Type.RESULT;
 
 final class EpochImpl implements Epoch.Default {
 
     /**
-     * The number of days in a 400 year cycle.
+     * The number of days in a 400-year cycle.
      */
     private static final int DAYS_PER_CYCLE = 146097;
 
@@ -121,7 +122,7 @@ final class EpochImpl implements Epoch.Default {
         return datePacker.pack(year, month, day);
     }
 
-    @Garbage(Garbage.Type.RESULT)
+    @Allocation(RESULT)
     @Override
     public String toString() {
         return "Epoch." + validationMethod();

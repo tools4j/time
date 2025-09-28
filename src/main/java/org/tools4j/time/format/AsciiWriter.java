@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2025 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -42,5 +42,5 @@ public interface AsciiWriter<T> {
     AsciiWriter<char[]> CHAR_ARRAY = (a, i, v) -> a[i] = (char)v;
     AsciiWriter<byte[]> BYTE_ARRAY = (a, i, v) -> a[i] = v;
     AsciiWriter<CharBuffer> CHAR_BUFFER = (b, i, v) -> b.put(i, (char)v);
-    AsciiWriter<ByteBuffer> BYTE_BUFFER = (b, i, v) -> b.put(i, v);
+    AsciiWriter<ByteBuffer> BYTE_BUFFER = ByteBuffer::put;
 }

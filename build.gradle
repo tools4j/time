@@ -1,59 +1,143 @@
-apply plugin: 'java'
-apply plugin: 'license'
-apply plugin: 'jacoco'
-apply plugin: 'com.github.kt3k.coveralls'
-
-sourceCompatibility = 1.8
-group = "org.tools4j"
-version = '1.7-SNAPSHOT'
-archivesBaseName = "tools4j-time"
-
-jar {
-    manifest {
-        attributes 'Implementation-Title': 'tools4j-time', 'Implementation-Version': version
-    }
-}
-
-repositories {
-    mavenCentral()
-}
+import java.time.Year
 
 buildscript {
-	repositories {
-		mavenCentral()
-		jcenter()
-	}
-
-    dependencies {
-		classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.11.0'
-        classpath "io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.5.3"
-        classpath "org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.8.2"
-	}
+    repositories {
+        mavenCentral()
+    }
 }
+
+plugins {
+    id 'idea'
+    id 'java-library'
+    id 'com.github.hierynomus.license' version "0.16.1" apply false
+    id 'biz.aQute.bnd.builder' version '7.1.0' apply false
+}
+
+defaultTasks 'clean', 'build'
+
+def projGroup = 'org.tools4j'
+def projVersion = file('version.txt').text.trim()
+
+def junitVersion = '5.13.4'
+
+static def getBuildJavaVersion() {
+    def buildJavaVersion = JavaVersion.current().getMajorVersion()
+    if (buildJavaVersion.indexOf('.') > 0) {
+        buildJavaVersion = buildJavaVersion.substring(0, buildJavaVersion.indexOf('.'))
+    }
+    if (buildJavaVersion.indexOf('-') > 0) {
+        buildJavaVersion = buildJavaVersion.substring(0, buildJavaVersion.indexOf('-'))
+    }
+    Integer.parseInt(buildJavaVersion)
+}
+int buildJavaVersion = getBuildJavaVersion()
+
+ext {
+    //gradle clean build publish -PossrhUsername=mterzer -PossrhPassword=xxx
+
+    isReleaseVersion = !projVersion.endsWith('-SNAPSHOT')
+    releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+    snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
+
+    println name + " version=" + projVersion + " release=" + isReleaseVersion
+
+    if (!project.hasProperty('ossrhUsername')) {
+        ossrhUsername = ''
+    }
+
+    if (!project.hasProperty('ossrhPassword')) {
+        ossrhPassword = ''
+    }
+}
+
+def projectPom = {
+    name = 'time'
+    packaging = 'pom'
+    // optionally artifactId can be defined here
+    description = 'Java library dealing with date and time values without creating objects to be suitable for zero garbage applications'
+    url = 'https://github.com/tools4j/time'
+
+    scm {
+        connection = 'scm:git:https://github.com/tools4j/time.git'
+        developerConnection = 'scm:git:https://github.com/tools4j/time.git'
+        url = 'https://github.com/tools4j/time.git'
+    }
+
+    licenses {
+        license {
+            name = 'The MIT License (MIT)'
+            url = 'https://opensource.org/licenses/MIT'
+        }
+    }
+
+    developers {
+       developer {
+            id = 'terzerm'
+            name = 'Marco Terzer'
+            email = 'terzerm@gmail.com'
+            url = 'https://github.com/terzerm'
+        }
+    }
+}
+
+jar.enabled = false
+
+allprojects {
+    repositories {
+        mavenCentral()
+        mavenLocal()
+    }
+}
+
+apply plugin: 'java-library'
+apply plugin: 'com.github.hierynomus.license'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+apply plugin: 'biz.aQute.bnd.builder'
 
 dependencies {
-    compile 'junit:junit:4.12'
-    testCompile 'org.tools4j:tools4j-spockito:1.6'
+    testImplementation "org.junit.jupiter:junit-jupiter-params:${junitVersion}"
+    testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
 }
 
-uploadArchives {
-    repositories {
-       flatDir {
-           dirs 'build/repositories'
-       }
+group = projGroup
+version = projVersion
+
+tasks.withType(Sign).configureEach {
+    onlyIf {
+        isReleaseVersion && gradle.taskGraph.hasTask(tasks.publish)
     }
+}
+
+tasks.withType(Jar).configureEach {
+    enabled = true
+    includeEmptyDirs = false
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.deprecation = true
+}
+
+test {
+    useJUnitPlatform()
+    enableAssertions = true
+    jvmArgs('-Ddisable.thread.safety=true')
+
+    testLogging {
+        showStandardStreams = true
+        exceptionFormat = 'full'
+    }
+
+    reports.html.required = true
 }
 
 license {
-    header rootProject.file('src/main/templates/LICENSE.template')
-    strictCheck true
-    sourceSets {
-        main {
-            java { include "**/*.java" }
-            resources { include "LICENSE.txt" }
-        }
-    }
-	ext.year = Calendar.getInstance().get(Calendar.YEAR)
+    header = file("${rootDir}/etc/LICENSE.template")
+    strictCheck = true
+    ext.year = Year.now().value
+    include "**/*.java"
     mapping {
         java='SLASHSTAR_STYLE'
     }
@@ -62,96 +146,72 @@ license {
 compileJava.dependsOn licenseFormat
 
 javadoc {
-	options.showFromPackage()
-	options.linkSource()
-	options.links("http://docs.oracle.com/javase/8/docs/api/");
-	options.docTitle = "tools4j-time API ${version}"
-	options.windowTitle = "tools4j-time API ${version}"
-	options.overview = "src/main/java/overview.html";
+    title = '<h1>time</h1>'
+    options.bottom = "<i>Copyright &#169; 2020-" + Year.now().getValue() + " tools4j.org (Marco Terzer, Anton Anufriev). All Rights Reserved.</i>"
+    options.encoding = 'UTF-8'
+    options.docEncoding = 'UTF-8'
+    options.charSet = 'UTF-8'
+    if (JavaVersion.current().isJava10Compatible()) {
+        options.addBooleanOption 'html5', true
+        options.links("https://docs.oracle.com/en/java/javase/${buildJavaVersion}/docs/api/")        }
 }
 
-task javadocJar(type: Jar) {
-    classifier = 'javadoc'
-    from javadoc
+task testJar(type: Jar, dependsOn: testClasses) {
+    archiveClassifier.set "test-${base.archivesName}"
+    from sourceSets.test.output
 }
 
-task sourcesJar(type: Jar) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
+configurations {
+    tests
 }
 
 artifacts {
-    archives javadocJar, sourcesJar
+    tests testJar
 }
 
-jacocoTestReport {
-    reports {
-        xml.enabled = true // coveralls plugin depends on xml format report
-        html.enabled = true
+jar {
+    bundle {
+        // workaround for https://github.com/bndtools/bnd/issues/6346
+        properties.put("project.group", provider({project.group}))
+        bnd """
+                Automatic-Module-Name:  org.tools4j.time
+                Bundle-Name:            org.tools4j.time
+                Bundle-SymbolicName:    org.tools4j.time
+                Implementation-Title:   time
+                Implementation-Vendor:  tools4j.org
+                Implementation-Version: ${projVersion}
+                -exportcontents: org.tools4j.time, org.tools4j.time.*
+                # Suppress headers that reduce reproducibility.
+                -reproducible: true
+                -noextraheaders: true
+            """
     }
 }
 
-//snapshot first, then release:
-//gradle clean uploadArchives -Pupload -PossrhUsername=xxx -PossrhPassword=xxx
-if (project.hasProperty('upload')) {
+java {
+    withSourcesJar()
+    withJavadocJar()
+}
 
-    allprojects {
-        apply plugin: 'signing'
-        apply plugin: 'maven'
-        apply plugin: 'io.codearte.nexus-staging'
-
-        // Signature of artifacts
-        signing {
-            sign configurations.archives
+publishing {
+    publications {
+        timeRegion(MavenPublication) {
+            from components.java
+            pom(projectPom)
         }
+    }
 
-        // OSSRH publication
-        uploadArchives {
-            repositories {
-                mavenDeployer {
-                    beforeDeployment {
-                        MavenDeployment deployment -> signing.signPom(deployment)
-                    }
-                    repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                        authentication(userName: ossrhUsername, password: ossrhPassword)
-                    }
-                    snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-                        authentication(userName: ossrhUsername, password: ossrhPassword)
-                    }
-
-                    pom.project {
-                        name 'time'
-                        packaging 'jar'
-                        // optionally artifactId can be defined here
-                        description 'Java library dealing with date and time values without creating objects to be suitable for zero garbage applications.'
-                        url 'http://time.tools4j.org'
-
-                        scm {
-                            connection 'scm:git:https://github.com/tools4j/time.git'
-                            developerConnection 'scm:git:https://github.com/tools4j/time.git'
-                            url 'https://github.com/tools4j/time.git'
-                        }
-                        licenses {
-                            license {
-                                name 'MIT License'
-                                url 'http://opensource.org/licenses/MIT'
-                            }
-                        }
-
-                        developers {
-                            developer {
-                                id 'terzerm'
-                                name 'Marco Terzer'
-                            }
-                        }
-                    }
-                }
+    repositories {
+        maven {
+            url = !isReleaseVersion ? snapshotsRepoUrl : releasesRepoUrl
+            credentials {
+                username = ossrhUsername
+                password = ossrhPassword
             }
         }
-
-        nexusStaging {
-            username = ossrhUsername
-            password = ossrhPassword
-        }
     }
+}
+
+signing {
+    sign publishing.publications.timeRegion
 }

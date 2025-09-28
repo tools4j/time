@@ -1,7 +1,7 @@
-/**
+/*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2025 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,9 +23,13 @@
  */
 package org.tools4j.time.pack;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.tools4j.spockito.Spockito;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.Parameter;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.tools4j.time.validate.ValidationMethod;
 
 import java.time.DateTimeException;
@@ -33,7 +37,10 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.tools4j.time.base.TimeFactors.MILLIS_PER_DAY;
 import static org.tools4j.time.validate.ValidationMethod.INVALIDATE_RESULT;
 import static org.tools4j.time.validate.ValidationMethod.THROW_EXCEPTION;
@@ -45,222 +52,235 @@ public class DatePackerTest {
 
     private static final DatePacker[] PACKERS = initPackers();
 
-    @RunWith(Spockito.class)
-    @Spockito.Unroll({
-            "|  localDate |",
-            "| 2017-01-01 |",
-            "| 2017-01-31 |",
-            "| 2017-02-28 |",
-            "| 2017-03-31 |",
-            "| 2017-04-30 |",
-            "| 2017-05-31 |",
-            "| 2017-06-30 |",
-            "| 2017-07-31 |",
-            "| 2017-08-31 |",
-            "| 2017-09-30 |",
-            "| 2017-10-31 |",
-            "| 2017-11-30 |",
-            "| 2017-12-31 |",
-            "| 2017-12-31 |",
-            "| 2016-02-29 |",
-            "| 2000-02-29 |",
-            "| 1900-02-28 |",
-            "| 1970-01-01 |",
-            "| 1970-01-02 |",
-            "| 1969-12-31 |",
-            "| 1969-12-30 |",
-            "| 1969-04-30 |",
-            "| 1968-02-28 |",
-            "| 1600-02-29 |",
-            "| 0004-02-29 |",
-            "| 0100-02-28 |",
-            "| 0400-02-29 |",
-            "| 0001-01-01 |",
-            "| 9999-12-31 |",
+    @Nested
+    @ParameterizedClass
+    @ValueSource(strings = {
+            "2017-01-01",
+            "2017-01-31",
+            "2017-02-28",
+            "2017-03-31",
+            "2017-04-30",
+            "2017-05-31",
+            "2017-06-30",
+            "2017-07-31",
+            "2017-08-31",
+            "2017-09-30",
+            "2017-10-31",
+            "2017-11-30",
+            "2017-12-31",
+            "2017-12-31",
+            "2016-02-29",
+            "2000-02-29",
+            "1900-02-28",
+            "1970-01-01",
+            "1970-01-02",
+            "1969-12-31",
+            "1969-12-30",
+            "1969-04-30",
+            "1968-02-28",
+            "1600-02-29",
+            "0004-02-29",
+            "0100-02-28",
+            "0400-02-29",
+            "0001-01-01",
+            "9999-12-31",
     })
-    public static class Valid {
+    class Valid {
 
         private static final DateTimeFormatter YYYYMMDD = DateTimeFormatter.ofPattern("yyyyMMdd");
 
+        @Parameter LocalDate localDate;
+
         @Test
-        public void packDecimal(final LocalDate localDate) throws Exception {
+        public void packDecimal() {
             final int packed = DatePacker.DECIMAL.pack(localDate);
             assertEquals(Integer.parseInt(localDate.format(YYYYMMDD)), packed);
         }
 
         @Test
-        public void packBinary(final LocalDate localDate) throws Exception {
+        public void packBinary() {
             final int packed = DatePacker.BINARY.pack(localDate);
             assertEquals((localDate.getYear() << 9) | (localDate.getMonthValue() << 5) | localDate.getDayOfMonth(),
                     packed);
         }
 
         @Test
-        public void packAndUnpackLocalDate(final LocalDate localDate) throws Exception {
+        public void packAndUnpackLocalDate() {
             for (final DatePacker packer : PACKERS) {
                 final int packed = packer.pack(localDate);
                 final LocalDate unpacked = packer.unpackLocalDate(packed);
-                assertEquals(packer + ": " + localDate + " -> " + packed, localDate, unpacked);
+                assertEquals(localDate, unpacked, packer + ": " + localDate + " -> " + packed);
             }
         }
 
         @Test
-        public void packAndUnpackYearMonthDay(final LocalDate localDate) throws Exception {
+        public void packAndUnpackYearMonthDay() {
             for (final DatePacker packer : PACKERS) {
                 final int packed = packer.pack(localDate.getYear(), localDate.getMonthValue(), localDate.getDayOfMonth());
                 final int year = packer.unpackYear(packed);
                 final int month = packer.unpackMonth(packed);
                 final int day = packer.unpackDay(packed);
-                assertEquals(packer + ": " + localDate + " -> " + packed + " [y]", localDate.getYear(), year);
-                assertEquals(packer + ": " + localDate + " -> " + packed + " [m]", localDate.getMonthValue(), month);
-                assertEquals(packer + ": " + localDate + " -> " + packed + " [d]", localDate.getDayOfMonth(), day);
+                assertEquals(localDate.getYear(), year, packer + ": " + localDate + " -> " + packed + " [y]");
+                assertEquals(localDate.getMonthValue(), month, packer + ": " + localDate + " -> " + packed + " [m]");
+                assertEquals(localDate.getDayOfMonth(), day, packer + ": " + localDate + " -> " + packed + " [d]");
             }
         }
 
         @Test
-        public void packEpochDay(final LocalDate localDate) throws Exception {
+        public void packEpochDay() {
             for (final DatePacker packer : PACKERS) {
                 final int packed = packer.packEpochDay(localDate.toEpochDay());
                 final LocalDate unpacked = packer.unpackLocalDate(packed);
-                assertEquals(packer + ": " + localDate + " -> " + packed, localDate, unpacked);
+                assertEquals(localDate, unpacked, packer + ": " + localDate + " -> " + packed);
             }
         }
 
         @Test
-        public void unpackEpochDay(final LocalDate localDate) throws Exception {
+        public void unpackEpochDay() {
             for (final DatePacker packer : PACKERS) {
                 final long epochDay = packer.unpackEpochDay(packer.pack(localDate));
-                assertEquals(packer + ": " + localDate, localDate.toEpochDay(), epochDay);
+                assertEquals(localDate.toEpochDay(), epochDay, packer + ": " + localDate);
             }
         }
 
         @Test
-        public void packEpochMilli(final LocalDate localDate) throws Exception {
+        public void packEpochMilli() {
             for (final DatePacker packer : PACKERS) {
                 final int packed = packer.packEpochMilli(localDate.atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli());
                 final LocalDate unpacked = packer.unpackLocalDate(packed);
-                assertEquals(packer + ": " + localDate + " -> " + packed, localDate, unpacked);
+                assertEquals(localDate, unpacked, packer + ": " + localDate + " -> " + packed);
             }
         }
 
         @Test
-        public void packFromPackedDateTime(final LocalDate localDate) throws Exception {
+        public void packFromPackedDateTime() {
             for (final DatePacker packer : PACKERS) {
                 Packing.forEach(packing -> {
                     final long packedDateTime = DateTimePacker.valueOf(packing).pack(localDate.atStartOfDay());
                     final int packedDate = packer.pack(packedDateTime, packing);
                     final LocalDate unpacked = packer.unpackLocalDate(packedDate);
-                    assertEquals(packer + "|" + packing + ": " + localDate + " -> " + packedDate, localDate, unpacked);
+                    assertEquals(localDate, unpacked, packer + "|" + packing + ": " + localDate + " -> " + packedDate);
                 });
             }
         }
 
         @Test
-        public void unpackEpochMilli(final LocalDate localDate) throws Exception {
+        public void unpackEpochMilli() {
             for (final DatePacker packer : PACKERS) {
                 final long epochMilli = packer.unpackEpochMilli(packer.pack(localDate));
-                assertEquals(packer + ": " + localDate, localDate.toEpochDay() * MILLIS_PER_DAY, epochMilli);
+                assertEquals(localDate.toEpochDay() * MILLIS_PER_DAY, epochMilli, packer + ": " + localDate);
             }
         }
     }
 
-    @RunWith(Spockito.class)
-    @Spockito.Unroll({
-            "|  year | month | day |",
-            "|     0 |    1  |   1 |",
-            "|    -1 |    1  |   1 |",
-            "| 10000 |    1  |   1 |",
-            "|  2017 |    0  |   1 |",
-            "|  2017 |   -1  |   1 |",
-            "|  2017 |   13  |   1 |",
-            "|  2017 |    1  |   0 |",
-            "|  2017 |    4  |  -1 |",//NOTE: day=-1 is equivalent to day=31
-            "|  2017 |    1  |  32 |",
-            "|  2017 |    2  |  29 |",
-            "|  2016 |    2  |  30 |",
-            "|  2000 |    2  |  30 |",
-            "|  1900 |    2  |  29 |",
-            "|  1900 |    4  |  31 |",
-            "|  1900 |    6  |  31 |",
-            "|  1900 |    9  |  31 |",
-            "|  1900 |   11  |  31 |",
+    @Nested
+    @ParameterizedClass
+    @CsvSource(delimiter = '|', value = {
+          //"  year | month | day ",
+            "     0 |    1  |   1 ",
+            "    -1 |    1  |   1 ",
+            " 10000 |    1  |   1 ",
+            "  2017 |    0  |   1 ",
+            "  2017 |   -1  |   1 ",
+            "  2017 |   13  |   1 ",
+            "  2017 |    1  |   0 ",
+            "  2017 |    4  |  -1 ",//NOTE: day=-1 is equivalent to day=31
+            "  2017 |    1  |  32 ",
+            "  2017 |    2  |  29 ",
+            "  2016 |    2  |  30 ",
+            "  2000 |    2  |  30 ",
+            "  1900 |    2  |  29 ",
+            "  1900 |    4  |  31 ",
+            "  1900 |    6  |  31 ",
+            "  1900 |    9  |  31 ",
+            "  1900 |   11  |  31 ",
     })
-    @Spockito.Name("[{row}]: {year}/{month}/{day}")
-    public static class Invalid {
-        @Test(expected = DateTimeException.class)
-        public void packIllegalYearMonthDayBinary(final int year, final int month, final int day) {
-            DatePacker.BINARY.forValidationMethod(THROW_EXCEPTION).pack(year, month, day);
+    public class Invalid {
+        @Parameter(0) int year;
+        @Parameter(1) int month;
+        @Parameter(2) int day;
+
+        @Test
+        public void packIllegalYearMonthDayBinary() {
+            assertThrowsExactly(DateTimeException.class,
+                    () -> DatePacker.BINARY.forValidationMethod(THROW_EXCEPTION).pack(year, month, day)
+            );
         }
 
         @Test
-        public void packInvalidYearMonthDayBinary(final int year, final int month, final int day) {
+        public void packInvalidYearMonthDayBinary() {
             final int packed = DatePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).pack(year, month, day);
-            assertEquals("should be invalid", DatePacker.INVALID, packed);
-        }
-
-        @Test(expected = DateTimeException.class)
-        public void packIllegalYearMonthDayDecimal(final int year, final int month, final int day) {
-            DatePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).pack(year, month, day);
+            assertEquals(DatePacker.INVALID, packed, "should be invalid");
         }
 
         @Test
-        public void packInvalidYearMonthDayDecimal(final int year, final int month, final int day) {
+        public void packIllegalYearMonthDayDecimal() {
+            assertThrowsExactly(DateTimeException.class, () ->
+                    DatePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).pack(year, month, day)
+            );
+        }
+
+        @Test
+        public void packInvalidYearMonthDayDecimal() {
             final int packed = DatePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).pack(year, month, day);
-            assertEquals("should be invalid", DatePacker.INVALID, packed);
-        }
-
-        @Test(expected = DateTimeException.class)
-        public void unpackIllegalYearMonthDayBinary(final int year, final int month, final int day) {
-            final int packed = DatePacker.BINARY.pack(year, month, day);
-            DatePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackDay(packed);
+            assertEquals(DatePacker.INVALID, packed, "should be invalid");
         }
 
         @Test
-        public void unpackInvalidYearMonthDayBinary(final int year, final int month, final int day) {
+        public void unpackIllegalYearMonthDayBinary() {
             final int packed = DatePacker.BINARY.pack(year, month, day);
-            assertNotEquals("should not be invalid", DatePacker.INVALID, packed);
+            assertThrowsExactly(DateTimeException.class, () ->
+                DatePacker.BINARY.forValidationMethod(THROW_EXCEPTION).unpackDay(packed)
+            );
+        }
+
+        @Test
+        public void unpackInvalidYearMonthDayBinary() {
+            final int packed = DatePacker.BINARY.pack(year, month, day);
+            assertNotEquals(DatePacker.INVALID, packed, "should not be invalid");
             final int invalid = DatePacker.BINARY.forValidationMethod(INVALIDATE_RESULT).unpackDay(packed);
-            assertEquals("should be invalid", DatePacker.INVALID, invalid);
-        }
-
-        @Test(expected = DateTimeException.class)
-        public void unpackIllegalYearMonthDayDecimal(final int year, final int month, final int day) {
-            final int packed = DatePacker.DECIMAL.pack(year, month, day);
-            DatePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackDay(packed);
+            assertEquals(DatePacker.INVALID, invalid, "should be invalid");
         }
 
         @Test
-        public void unpackInvalidYearMonthDayDecimal(final int year, final int month, final int day) {
+        public void unpackIllegalYearMonthDayDecimal() {
             final int packed = DatePacker.DECIMAL.pack(year, month, day);
-            assertNotEquals("should not be invalid", DatePacker.INVALID, packed);
+            assertThrowsExactly(DateTimeException.class, () ->
+                    DatePacker.DECIMAL.forValidationMethod(THROW_EXCEPTION).unpackDay(packed)
+            );
+        }
+
+        @Test
+        public void unpackInvalidYearMonthDayDecimal() {
+            final int packed = DatePacker.DECIMAL.pack(year, month, day);
+            assertNotEquals(DatePacker.INVALID, packed, "should not be invalid");
             final int invalid = DatePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackDay(packed);
-            assertEquals("should be invalid", DatePacker.INVALID, invalid);
+            assertEquals(DatePacker.INVALID, invalid, "should be invalid");
         }
     }
 
-    @RunWith(Spockito.class)
-    @Spockito.Unroll({
-            "| packing |",
-            "|  BINARY |",
-            "| DECIMAL |",
-    })
-    @Spockito.UseValueConverter
-    public static class Special {
+    @Nested
+    @ParameterizedClass
+    @EnumSource(Packing.class)
+    public class Special {
+
+        @Parameter Packing packing;
+
         @Test
-        public void packAndUnpackNull(final Packing packing) throws Exception {
+        public void packAndUnpackNull() {
             final DatePacker packer = DatePacker.valueOf(packing);
             final int packed1 = packer.packNull();
             final int packed2 = packer.pack(null);
             final boolean isNull1 = packer.unpackNull(packed1);
             final boolean isNull2 = packer.unpackNull(packed2);
-            assertEquals(packer + ".packNull()", 0, packed1);
-            assertEquals(packer + ".pack(null)", 0, packed2);
-            assertTrue(packer + ":unpackNull(packNull())", isNull1);
-            assertTrue(packer + ":unpackNull(pack(null))", isNull2);
+            assertEquals(0, packed1, packer + ".packNull()");
+            assertEquals(0, packed2, packer + ".pack(null)");
+            assertTrue(isNull1, packer + ":unpackNull(packNull())");
+            assertTrue(isNull2, packer + ":unpackNull(pack(null))");
         }
 
         @Test
-        public void packing(final Packing packing) throws Exception {
+        public void packing() throws Exception {
             final DatePacker packer = DatePacker.valueOf(packing);
             assertEquals(packing, packer.packing());
             assertEquals(packer, DatePacker.class.getField(packing.name()).get(null));

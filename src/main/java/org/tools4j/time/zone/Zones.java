@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2017-2021 tools4j.org (Marco Terzer)
+ * Copyright (c) 2017-2025 tools4j.org (Marco Terzer)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -61,13 +61,13 @@ public final class Zones {
 
         //midnight in AU
         final long millisSinceEpochOneSecondBeforeMidnightAU = ZonedDateTime.of(2018, 3, 31, 23, 59, 59, 0, zoneIdAU).toEpochSecond();
-        System.out.println("1 second before midnight in AU");
+        System.out.println("1 second before AU midnight: no zone, UTC, Default, SYD, NYK");
         dateFormatter.formatEpochSecond(millisSinceEpochOneSecondBeforeMidnightAU, System.out);System.out.println();
         dateFormatter.formatEpochSecond(millisSinceEpochOneSecondBeforeMidnightAU, Zone.utc(), System.out);System.out.println();
         dateFormatter.formatEpochSecond(millisSinceEpochOneSecondBeforeMidnightAU, Zone.systemDefault(), System.out);System.out.println();
         dateFormatter.formatEpochSecond(millisSinceEpochOneSecondBeforeMidnightAU, zoneAU, System.out);System.out.println();
         dateFormatter.formatEpochSecond(millisSinceEpochOneSecondBeforeMidnightAU, Zone.newYork(), System.out);System.out.println();
-        System.out.println("1 second after midnight in AU");
+        System.out.println("1 second after AU midnight: no zone, UTC, Default, SYD, NYK");
         dateFormatter.formatEpochSecond(millisSinceEpochOneSecondBeforeMidnightAU+2, System.out);System.out.println();
         dateFormatter.formatEpochSecond(millisSinceEpochOneSecondBeforeMidnightAU+2, Zone.utc(), System.out);System.out.println();
         dateFormatter.formatEpochSecond(millisSinceEpochOneSecondBeforeMidnightAU+2, Zone.systemDefault(), System.out);System.out.println();
