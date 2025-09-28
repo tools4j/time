@@ -3,8 +3,8 @@
 <!-- [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.tools4j/tools4j-time/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.tools4j/tools4j-time) -->
 
 # tools4j-time
-Java library dealing with date and time values without creating objects to be suitable for zero garbage applications.
-
+Java library to parse, format, convert and deal with date and time values in an efficient way without object allocations 
+so that it can be used in Zero GC applications.
 ### FAQ
 * [Frequently asked Questions](https://github.com/tools4j/time/issues?q=label:question)
 
