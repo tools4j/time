@@ -1,6 +1,4 @@
-[![Build Status](https://travis-ci.org/tools4j/time.svg?branch=master)](https://travis-ci.org/tools4j/time)
-[![Coverage Status](https://coveralls.io/repos/github/tools4j/time/badge.svg?branch=master)](https://coveralls.io/github/tools4j/time?branch=master)
-<!-- [![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.tools4j/tools4j-time/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.tools4j/tools4j-time) -->
+[![Continuous Integration](https://github.com/tools4j/time/workflows/Continuous%20Integration/badge.svg)](https://github.com/tools4j/time/actions?query=workflow%3A%22Continuous+Integration%22)
 
 # tools4j-time
 Java library to parse, format, convert and deal with date and time values in an efficient way without object allocations 
