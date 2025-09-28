@@ -116,6 +116,9 @@ tasks.withType(Jar).configureEach {
 }
 
 tasks.withType(JavaCompile).configureEach {
+    if (JavaVersion.current().isJava9Compatible()) {
+        options.compilerArgs.addAll(['--add-exports', 'java.base/java.time.zone=ALL-UNNAMED'])
+    }
     options.encoding = 'UTF-8'
     options.deprecation = true
 }
@@ -124,6 +127,7 @@ test {
     useJUnitPlatform()
     enableAssertions = true
     jvmArgs('-Ddisable.thread.safety=true')
+    jvmArgs('--add-opens', 'java.base/java.time.zone=ALL-UNNAMED')
 
     testLogging {
         showStandardStreams = true
