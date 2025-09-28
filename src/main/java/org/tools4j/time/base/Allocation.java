@@ -43,6 +43,7 @@ public @interface Allocation {
     /** @return description of the type of allocation and the situation in which it may occur */
     String text() default "";
 
+    /** Defines different allocation types */
     enum Type {
         /**
          * Indicates that only the result value returned by a method is allocated and no other
