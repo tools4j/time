@@ -192,7 +192,7 @@ public interface DateTimePacker {
 
     /**
      * Non-validating binary packing method.  This packing method uses bit shifting and other bitwise logical operations
-     * and is very efficient; resulting packed dates are not easily human readable.
+     * and is very efficient; resulting packed dates are not easily human-readable.
      */
     DateTimePacker BINARY = new Default() {
         @Override
@@ -260,7 +260,7 @@ public interface DateTimePacker {
 
     /**
      * Non-validating decimal packing method.  This packing method uses multiplications, divisions and modulo operations
-     * which means it is less efficient than binary packing but results in human readable packed longs.  For instance
+     * which means it is less efficient than binary packing but results in human-readable packed longs.  For instance
      * the date/time value 21-Jan-2017 14:15:16.170 is packed into the long value 20170121141516170.
      */
     DateTimePacker DECIMAL = new Default() {
@@ -331,6 +331,7 @@ public interface DateTimePacker {
      * Implementation that performs validation before packing and after unpacking a date.  Instances can be accessed
      * via {@link #valueOf(Packing, ValidationMethod)}.
      */
+    @SuppressWarnings("ClassCanBeRecord")
     class Validated implements Default {
         private final DateTimePacker packer;
         private final DateValidator dateValidator;

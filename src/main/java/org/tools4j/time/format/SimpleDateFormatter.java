@@ -55,6 +55,7 @@ final class SimpleDateFormatter implements DateFormatter.Default {
         return validationMethod;
     }
 
+    @SuppressWarnings("PointlessArithmeticExpression")
     @Override
     public <T> int format(final int year, final int month, final int day, final T target, final AsciiWriter<? super T> writer, final int offset) {
         if (DateValidator.INVALID == validationMethod().dateValidator().validateDay(year, month, day)) {

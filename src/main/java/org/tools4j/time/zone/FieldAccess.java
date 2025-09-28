@@ -26,10 +26,7 @@ package org.tools4j.time.zone;
 import java.lang.reflect.Field;
 import java.util.Objects;
 
-final class FieldAccess<T> {
-    final Field field;
-    final Class<T> fieldType;
-
+record FieldAccess<T>(Field field, Class<T> fieldType) {
     FieldAccess(final Field field, final Class<T> fieldType) {
         this.field = Objects.requireNonNull(field);
         this.fieldType = Objects.requireNonNull(fieldType);
@@ -39,11 +36,12 @@ final class FieldAccess<T> {
         }
     }
 
+    @SuppressWarnings("SameParameterValue")
     static <T> FieldAccess<T> forField(Class<?> owner, final String fieldName, final Class<T> fieldType) {
         try {
             final Field field = owner.getDeclaredField(fieldName);
             field.setAccessible(true);
-            return new FieldAccess<T>(field, fieldType);
+            return new FieldAccess<>(field, fieldType);
         } catch (final NoSuchFieldException e) {
             throw new RuntimeException("Could not access field " + owner.getName() + "." + fieldName + ", e=" + e, e);
         }

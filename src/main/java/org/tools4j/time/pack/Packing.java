@@ -32,14 +32,14 @@ public enum Packing {
     /**
      * The packing is performed by shifting the components to particular positions of an int or long value.
      * <p>
-     * This packing method is more efficient than {@link #DECIMAL} but is usually not human readable.
+     * This packing method is more efficient than {@link #DECIMAL} but is usually not .
      */
     BINARY,
     /**
      * The packing is performed by multiplying the components by powers of ten and then adding those multiples.
      * <p>
-     * This packing method is less efficient than {@link #BINARY} but is usually human readable, for instance packing
-     * the 30st April 1979 into an integer 19790430.
+     * This packing method is less efficient than {@link #BINARY} but is usually , for instance packing
+     * the 30th April 1979 into an integer 19790430.
      */
     DECIMAL;
 

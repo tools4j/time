@@ -334,7 +334,7 @@ public class DateTimePackerTest {
         }
 
         @Test
-        public void unpackInvalidYearMonthDayourMinSecMilliDecimal() {
+        public void unpackInvalidYearMonthDayHourMinSecMilliDecimal() {
             final long packed = DateTimePacker.DECIMAL.pack(year, month, day, hour, minute, second, milli);
             assertNotEquals(DateTimePacker.INVALID, packed, "should not be invalid");
             final int d = DateTimePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackDay(packed);

@@ -199,13 +199,12 @@ final class ValidatingDateParser implements DateParser.Default {
         }
         final int offsetTwo = format.offsetSeparatorTwo();
         if (offsetTwo >= 0) {
-            if (separatorChar != reader.readChar(source, offset + offsetTwo)) {
-                return false;
-            }
+            return separatorChar == reader.readChar(source, offset + offsetTwo);
         }
         return true;
     }
 
+    @SuppressWarnings("SameParameterValue")
     private <S> int invalid(final int value, final String message,
                             final S source, final AsciiReader<? super S> reader, final int offset) {
         return invalid(validationMethod(), format(), value, message, source, reader, offset);
@@ -217,11 +216,13 @@ final class ValidatingDateParser implements DateParser.Default {
         return (int)invalidValue(validationMethod, dateFormat, value, INVALID, message, source, reader, offset);
     }
 
+    @SuppressWarnings("SameParameterValue")
     private <S> char invalidSeparator(final char value, final String message,
                                       final S source, final AsciiReader<? super S> reader, final int offset) {
         return (char)invalidValue(validationMethod(), format(), value, INVALID_SEPARATOR, message, source, reader, offset);
     }
 
+    @SuppressWarnings("SameParameterValue")
     private <S> long invalidEpoch(final long value, final String message,
                                   final S source, final AsciiReader<? super S> reader, final int offset) {
         return invalidValue(validationMethod(), format(), value, INVALID_EPOCH, message, source, reader, offset);
@@ -229,16 +230,14 @@ final class ValidatingDateParser implements DateParser.Default {
     private static <S> long invalidValue(final ValidationMethod validationMethod, final DateFormat dateFormat,
                                          final long value, final long invalidValue, final String message,
                                          final S source, final AsciiReader<? super S> reader, final int offset) {
-        switch (validationMethod) {
-            case UNVALIDATED:
-                return value;
-            case INVALIDATE_RESULT:
-                return invalidValue;
-            case THROW_EXCEPTION:
-                throw new DateTimeException(toString(message, source, reader, offset, dateFormat.length()));
-            default:
-                throw new IllegalStateException("Unsupported validation method: " + validationMethod);
-        }
+        return switch (validationMethod) {
+            case UNVALIDATED -> value;
+            case INVALIDATE_RESULT -> invalidValue;
+            case THROW_EXCEPTION ->
+                    throw new DateTimeException(toString(message, source, reader, offset, dateFormat.length()));
+            //noinspection UnnecessaryDefault
+            default -> throw new IllegalStateException("Unsupported validation method: " + validationMethod);
+        };
     }
 
     @Allocation(RESULT)

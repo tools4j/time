@@ -23,6 +23,7 @@
  */
 package org.tools4j.time.base;
 
+import org.tools4j.time.base.Epoch.Default;
 import org.tools4j.time.pack.DatePacker;
 import org.tools4j.time.validate.DateValidator;
 import org.tools4j.time.validate.ValidationMethod;
@@ -34,7 +35,7 @@ import static java.lang.Math.floorDiv;
 import static java.lang.Math.floorMod;
 import static org.tools4j.time.base.Allocation.Type.RESULT;
 
-final class EpochImpl implements Epoch.Default {
+record EpochImpl(ValidationMethod validationMethod) implements Default {
 
     /**
      * The number of days in a 400-year cycle.
@@ -50,17 +51,11 @@ final class EpochImpl implements Epoch.Default {
 
     private static final EpochImpl[] INSTANCES = initInstances();
 
-    private final ValidationMethod validationMethod;
-
     EpochImpl(final ValidationMethod validationMethod) {
         this.validationMethod = Objects.requireNonNull(validationMethod);
     }
 
-    @Override
-    public ValidationMethod validationMethod() {
-        return validationMethod;
-    }
-
+    @SuppressWarnings("UnnecessaryLocalVariable")
     public long toEpochDay(final int year, final int month, final int day) {
         //see LocalDate.toEpochDay
         if (DateValidator.INVALID == validationMethod.dateValidator().validateDay(year, month, day)) {
@@ -90,7 +85,7 @@ final class EpochImpl implements Epoch.Default {
         //see LocalDate.ofEpochDay(..)
         long zeroDay = daysSinceEpoch + DAYS_0000_TO_1970;
         // find the march-based year
-        zeroDay -= 60;  // adjust to 0000-03-01 so leap day is at end of four year cycle
+        zeroDay -= 60;  // adjust to 0000-03-01 so leap day is at end of four-year cycle
         long adjust = 0;
         if (zeroDay < 0) {
             // adjust negative years to positive for calculation
@@ -137,10 +132,10 @@ final class EpochImpl implements Epoch.Default {
     }
 
     static int divMod(final long value, final long divisor, final int moduloDivisor) {
-        return (int) floorMod(floorDiv(value, divisor), moduloDivisor);
+        return floorMod(floorDiv(value, divisor), moduloDivisor);
     }
 
-    private static final EpochImpl[] initInstances() {
+    private static EpochImpl[] initInstances() {
         final EpochImpl[] instances = new EpochImpl[ValidationMethod.count()];
         for (int ordinal = 0; ordinal < instances.length; ordinal++) {
             instances[ordinal] = new EpochImpl(ValidationMethod.valueByOrdinal(ordinal));

@@ -28,7 +28,7 @@ final class Ascii {
     static final char NO_SEPARATOR = (char)Byte.MIN_VALUE;
 
     static byte validateSeparatorChar(final char separator) {
-        if ((separator >= 0 & separator <= Byte.MAX_VALUE) | separator == NO_SEPARATOR) {
+        if (separator <= Byte.MAX_VALUE | separator == NO_SEPARATOR) {
             return (byte)separator;
         }
         throw new IllegalArgumentException("Illegal separator char: " + separator);

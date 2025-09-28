@@ -54,7 +54,7 @@ import static org.tools4j.time.validate.ValidationMethod.THROW_EXCEPTION;
 public class NanoTimePackerTest {
 
     private static final NanoTimePacker[] PACKERS = initPackers();
-    private static final LocalDate[] DATES = {LocalDate.of(1931, 1, 1), LocalDate.of(1969, 12, 31), LocalDate.of(1970, 1,1), LocalDate.of(2017,06, 06), LocalDate.of(2036, 12, 31)};
+    private static final LocalDate[] DATES = {LocalDate.of(1931, 1, 1), LocalDate.of(1969, 12, 31), LocalDate.of(1970, 1,1), LocalDate.of(2017,6, 6), LocalDate.of(2036, 12, 31)};
 
     @Nested
     @ParameterizedClass

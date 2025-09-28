@@ -136,9 +136,9 @@ public interface MilliTimePacker {
 
         @Override
         default long unpackMilliOfDay(final int packed) {
-            return unpackHour(packed) * MILLIS_PER_HOUR +
-                    unpackMinute(packed) * MILLIS_PER_MINUTE +
-                    unpackSecond(packed) * MILLIS_PER_SECOND +
+            return unpackHour(packed) * (long)MILLIS_PER_HOUR +
+                    unpackMinute(packed) * (long)MILLIS_PER_MINUTE +
+                    unpackSecond(packed) * (long)MILLIS_PER_SECOND +
                     unpackMilli(packed);
         }
 
@@ -150,7 +150,7 @@ public interface MilliTimePacker {
 
     /**
      * Non-validating binary packing method.  This packing method uses bit shifting and other bitwise logical operations
-     * and is very efficient; resulting packed dates are not easily human readable.
+     * and is very efficient; resulting packed dates are not easily .
      */
     MilliTimePacker BINARY = new Default() {
         @Override
@@ -196,7 +196,7 @@ public interface MilliTimePacker {
 
     /**
      * Non-validating decimal packing method.  This packing method uses multiplications, divisions and modulo operations
-     * which means it is less efficient than binary packing but results in human readable packed integers.  For instance
+     * which means it is less efficient than binary packing but results in  packed integers.  For instance
      * the time 14:15:16.170 is packed into the integer value 141516170.
      */
     MilliTimePacker DECIMAL = new Default() {
@@ -245,6 +245,7 @@ public interface MilliTimePacker {
      * Implementation that performs validation before packing and after unpacking a time value.  Instances can be
      * accessed via {@link #valueOf(Packing, ValidationMethod)}.
      */
+    @SuppressWarnings("ClassCanBeRecord")
     class Validated implements Default {
         private final MilliTimePacker packer;
         private final TimeValidator validator;

@@ -31,7 +31,7 @@ import java.util.function.Consumer;
  * the type of separator character.
  */
 public enum TimeFormat {
-    /** Time format without separator chars such as 1315 for a quarter past 1pm */
+    /** Time format without separator char such as 1315 for a quarter past 1pm */
     HHMM(0, 2, -1, -1, -1, -1, -1, 0, 4),
     /** Time format without separator chars such as 131501 for 15 minutes and one second past 1pm */
     HHMMSS(0, 2, 4, -1, -1, -1, -1, 0, 6),
@@ -41,7 +41,7 @@ public enum TimeFormat {
     HHMMSSUUUUUU(0, 2, 4, 6, -1, -1, -1, 6, 12),
     /** Time format without separator chars such as 131501999999999 for 15 minutes, one second and 999999999 nanoseconds past 1pm */
     HHMMSSNNNNNNNNN(0, 2, 4, 6, -1, -1, -1, 9, 15),
-    /** Time format without separator chars such as 13:15 for a quarter past 1pm */
+    /** Time format with separator char such as 13:15 for a quarter past 1pm */
     HH_MM(0, 3, -1, -1, 2, -1, -1, 0, 5),
     /** Time format with separator chars such as 13:15:01 for 15 minutes and one second past 1pm */
     HH_MM_SS(0, 3, 6, -1, 2, 5, -1, 0, 8),
@@ -165,7 +165,7 @@ public enum TimeFormat {
         return length;
     }
 
-    private static TimeFormat[] VALUES = values();
+    private static final TimeFormat[] VALUES = values();
 
     /** @return the number of time formats available */
     public static int count() {

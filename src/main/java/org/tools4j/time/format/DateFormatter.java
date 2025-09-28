@@ -83,7 +83,7 @@ public interface DateFormatter {
     }
 
     /**
-     * Returns a date formatter for the specified format and separator charactor which performs no validation.
+     * Returns a date formatter for the specified format and separator character which performs no validation.
      * @param format the date format
      * @param separatorChar the character separating date parts, e.g. '-' in '20170-07-31';
      *                      ignored if format has no separator characters
@@ -107,7 +107,7 @@ public interface DateFormatter {
     }
 
     /**
-     * Returns a date formatter for the specified format, separator charactor and validation method
+     * Returns a date formatter for the specified format, separator character and validation method
      * @param format the date format
      * @param separatorChar the character separating date parts, e.g. '-' in '20170-07-31';
      *                      ignored if format has no separator characters

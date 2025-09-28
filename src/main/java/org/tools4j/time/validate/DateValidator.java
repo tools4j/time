@@ -187,7 +187,7 @@ public enum DateValidator {
                     }
                     return (month < 8) ^ ((month & 0x1) == 0);
                 }
-                if (day <= 29) {
+                if (day == 29) {
                     if ((year % 4) != 0) {
                         return false;
                     }

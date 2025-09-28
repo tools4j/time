@@ -27,9 +27,7 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Objects;
 
-final class OffsetZone implements Zone {
-
-    private final ZoneOffset zoneOffset;
+record OffsetZone(ZoneOffset zoneOffset) implements Zone {
 
     OffsetZone(final ZoneOffset zoneOffset) {
         this.zoneOffset = Objects.requireNonNull(zoneOffset);
@@ -54,11 +52,6 @@ final class OffsetZone implements Zone {
     public int offsetSeconds(final int zoneYear, final int zoneMonth, final int zoneDay,
                              final int zoneHour, final int zoneMinute, final int zoneSecond, final int zoneNano) {
         return zoneOffset.getTotalSeconds();
-    }
-
-    @Override
-    public int hashCode() {
-        return zoneOffset.hashCode();
     }
 
     @Override

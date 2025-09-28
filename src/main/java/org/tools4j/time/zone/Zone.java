@@ -57,6 +57,10 @@ public interface Zone {
         return Instances.forZoneId(zoneId);
     }
 
+    static Zone forZoneId(final ZoneId zoneId) {
+        return forZoneId(zoneId.getId());
+    }
+
     final class Instances {
         private static final Zone UTC = new OffsetZone(ZoneOffset.UTC);
         private static final Zone SYSTEM_DEFAULT = create(ZoneId.systemDefault());

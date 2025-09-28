@@ -158,7 +158,7 @@ public interface DatePacker {
 
     /**
      * Non-validating binary packing method.  This packing method uses bit shifting and other bitwise logical operations
-     * and is very efficient; resulting packed dates are not easily human readable.
+     * and is very efficient; resulting packed dates are not easily .
      */
     DatePacker BINARY = new DatePacker.Default() {
         @Override
@@ -199,7 +199,7 @@ public interface DatePacker {
 
     /**
      * Non-validating decimal packing method.  This packing method uses multiplications, divisions and modulo operations
-     * which means it is less efficient than binary packing but results in human readable packed integers.  For instance
+     * which means it is less efficient than binary packing but results in  packed integers.  For instance
      * the date 21-Jan-2017 is packed into the integer value 20170121.
      */
     DatePacker DECIMAL = new DatePacker.Default() {
@@ -243,6 +243,7 @@ public interface DatePacker {
      * Implementation that performs validation before packing and after unpacking a date.  Instances can be accessed
      * via {@link #valueOf(Packing, ValidationMethod)}.
      */
+    @SuppressWarnings("ClassCanBeRecord")
     class Validated implements DatePacker.Default {
         private final DatePacker packer;
         private final DateValidator validator;
