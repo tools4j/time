@@ -36,18 +36,19 @@ import static org.tools4j.time.base.TimeFactors.MILLIS_PER_HOUR;
 import static org.tools4j.time.base.TimeFactors.MILLIS_PER_MINUTE;
 import static org.tools4j.time.base.TimeFactors.MILLIS_PER_SECOND;
 import static org.tools4j.time.base.TimeFactors.NANOS_PER_MILLI;
+import static org.tools4j.time.validate.TimeValidator.isValidTimeWithMillis;
 
 /**
  * Packs a time value (hour, minute, second, millis) into an integer.  Packing and unpacking can be done with or without
- * time validation using different {@link #validationMethod() validation methods}.  A {@link #DECIMAL} and a
- * {@link #BINARY} packing is supported and both packings preserve the natural date ordering, that is, if the packed
+ * time validation using different {@linkplain #validationMethod() validation methods}.  A {@linkplain #DECIMAL} and a
+ * {@linkplain #BINARY} packing is supported and both packings preserve the natural date ordering, that is, if the packed
  * integers are sorted then the corresponding time values are also sorted.  Packing and unpacking of null values is
  * supported via {@link #packNull()} and {@link #unpackNull(int)}.
  * <p>
  * <i>Examples:</i>
  * <ul>
- *     <li>{@link #DECIMAL} packing for a time value 14:15:16.170 is 141516170</li>
- *     <li>{@link #BINARY} packing uses shifts to pack the time parts which is more efficient but the result is not
+ *     <li>{@linkplain #DECIMAL} packing for a time value 14:15:16.170 is 141516170</li>
+ *     <li>{@linkplain #BINARY} packing uses shifts to pack the time parts which is more efficient but the result is not
  *     easily human-readable</li>
  * </ul>
  * @see #valueOf(Packing, ValidationMethod)
@@ -61,7 +62,9 @@ public interface MilliTimePacker {
     ValidationMethod validationMethod();
     MilliTimePacker forValidationMethod(ValidationMethod validationMethod);
     int pack(int hour, int minute, int second, int milli);
-    int pack(long packedDateTime, Packing packing);
+    int packFromDateTime(long packedDateTIme, Packing packing);
+    int packFromTime(int packedTime, Packing packing);
+    int packFromMilliTime(int packedMilliTime, Packing packing);
     int unpackHour(int packed);
     int unpackMinute(int packed);
     int unpackSecond(int packed);
@@ -69,10 +72,15 @@ public interface MilliTimePacker {
     int packNull();
     boolean unpackNull(int packed);
     int pack(LocalTime localTime);
+
     @Allocation(RESULT)
     LocalTime unpackLocalTime(int packed);
     int packEpochMilli(long millisSinceEpoch);
     long unpackMilliOfDay(int packed);
+
+    boolean isValid(int packed);
+    int validate(int packed);
+    int validate(int packed, ValidationMethod validationMethod);
 
     /**
      * Returns a milli-time packer that performs no validation.
@@ -115,10 +123,26 @@ public interface MilliTimePacker {
         }
 
         @Override
-        default int pack(final long packedDateTime, final Packing packing) {
-            final DateTimePacker unpacker = DateTimePacker.valueOf(packing, validationMethod());
-            return pack(unpacker.unpackHour(packedDateTime), unpacker.unpackMinute(packedDateTime),
-                    unpacker.unpackSecond(packedDateTime), unpacker.unpackMilli(packedDateTime));
+        default int packFromTime(final int packedTime, final Packing packing) {
+            final TimePacker tp = TimePacker.valueOf(packing, validationMethod());
+            return pack(tp.unpackHour(packedTime), tp.unpackMinute(packedTime), tp.unpackSecond(packedTime), 0);
+        }
+
+        @Override
+        default int packFromDateTime(final long packedDateTime, final Packing packing) {
+            final DateTimePacker dtp = DateTimePacker.valueOf(packing, validationMethod());
+            return pack(dtp.unpackHour(packedDateTime), dtp.unpackMinute(packedDateTime),
+                    dtp.unpackSecond(packedDateTime), dtp.unpackMilli(packedDateTime));
+        }
+
+        @Override
+        default int packFromMilliTime(final int packedMilliTime, final Packing packing) {
+            if (packing == packing() && validationMethod() == ValidationMethod.UNVALIDATED) {
+                return packedMilliTime;
+            }
+            final MilliTimePacker mtp = MilliTimePacker.valueOf(packing, validationMethod());
+            return pack(mtp.unpackHour(packedMilliTime), mtp.unpackMinute(packedMilliTime),
+                    mtp.unpackSecond(packedMilliTime), mtp.unpackMilli(packedMilliTime));
         }
 
         @Override
@@ -140,6 +164,29 @@ public interface MilliTimePacker {
                     unpackMinute(packed) * (long)MILLIS_PER_MINUTE +
                     unpackSecond(packed) * (long)MILLIS_PER_SECOND +
                     unpackMilli(packed);
+        }
+
+        @Override
+        default boolean isValid(final int packed) {
+            return packed != INVALID && (packed == NULL || isValidTimeWithMillis(
+                    unpackHour(packed), unpackMinute(packed), unpackSecond(packed), unpackMilli(packed)
+            ));
+        }
+
+        @Override
+        default int validate(final int packed) {
+            return validate(packed, validationMethod());
+        }
+
+        @Override
+        default int validate(final int packed, final ValidationMethod validationMethod) {
+            if (packed == NULL || packed == INVALID || validationMethod == ValidationMethod.UNVALIDATED) {
+                return packed;
+            }
+            final TimeValidator tv = validationMethod.timeValidator();
+            return tv.validateTimeWithMillis(
+                    unpackHour(packed), unpackMinute(packed), unpackSecond(packed), unpackMilli(packed)
+            ) != TimeValidator.INVALID ? packed : INVALID;
         }
 
         @Override

@@ -188,7 +188,7 @@ public class DateTimePackerTest {
                 Packing.forEach(packing -> {
                     final int packedDate = DatePacker.valueOf(packing).pack(localDate);
                     final int packedTime = TimePacker.valueOf(packing).pack(localTime);
-                    final long packedDateTime = packer.pack(packedDate, packing, packedTime, TimePacker.valueOf(packing));
+                    final long packedDateTime = packer.packFromDateAndTime(packedDate, packing, packedTime, packing);
                     final LocalDateTime unpacked = packer.unpackLocalDateTime(packedDateTime);
                     assertEquals(localDate, unpacked.toLocalDate(), packer + "|" + packing  + ": " + localDate + " " + localTime + " -> " + packedDateTime);
                     assertEquals(localTime.withNano(0), unpacked.toLocalTime(), packer + "|" + packing  + ": " + localDate + " " + localTime + " -> " + unpacked.toLocalTime());
@@ -202,7 +202,7 @@ public class DateTimePackerTest {
                 Packing.forEach(packing -> {
                     final int packedDate = DatePacker.valueOf(packing).pack(localDate);
                     final int packedTime = MilliTimePacker.valueOf(packing).pack(localTime);
-                    final long packedDateTime = packer.pack(packedDate, packing, packedTime, MilliTimePacker.valueOf(packing));
+                    final long packedDateTime = packer.packFromDateAndMilliTime(packedDate, packing, packedTime, packing);
                     final LocalDateTime unpacked = packer.unpackLocalDateTime(packedDateTime);
                     assertEquals(localDate, unpacked.toLocalDate(), packer + "|" + packing  + ": " + localDate + " " + localTime + " -> " + packedDateTime);
                     assertEquals(localTime, unpacked.toLocalTime(), packer + "|" + packing  + ": " + localDate + " " + localTime + " -> " + unpacked.toLocalTime());

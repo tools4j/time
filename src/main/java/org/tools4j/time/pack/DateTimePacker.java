@@ -37,19 +37,21 @@ import java.util.Objects;
 import static org.tools4j.time.base.Allocation.Type.RESULT;
 import static org.tools4j.time.base.TimeFactors.MILLIS_PER_SECOND;
 import static org.tools4j.time.base.TimeFactors.NANOS_PER_MILLI;
+import static org.tools4j.time.validate.DateValidator.isValidDate;
+import static org.tools4j.time.validate.TimeValidator.isValidTimeWithMillis;
 
 /**
  * Packs a date/time value (year, month, day, hour, minute, second, millis) into a single long.  Packing and unpacking
- * can be done with or without date/time validation using different {@link #validationMethod() validation methods}.
- * A {@link #DECIMAL} and a {@link #BINARY} packing is supported and both packings preserve the natural date ordering,
- * that is, if the packed longs are sorted then the corresponding date/time values are also sorted.  Packing and
- * unpacking of null values is supported via {@link #packNull()} and {@link #unpackNull(long)}.
+ * can be done with or without date/time validation using different {@linkplain #validationMethod() validation methods}.
+ * A {@linkplain #DECIMAL} and a {@linkplain #BINARY} packing is supported and both packings preserve the natural date
+ * ordering, that is, if the packed longs are sorted then the corresponding date/time values are also sorted.  Packing
+ * and unpacking of null values is supported via {@link #packNull()} and {@link #unpackNull(long)}.
  * <p>
  * <i>Examples:</i>
  * <ul>
- *     <li>{@link #DECIMAL} packing for a date/time value 21-Jan-2017 14:15:16.170 is 20170121141516170</li>
- *     <li>{@link #BINARY} packing uses shifts to pack the date/time parts which is more efficient but the result is not
- *     easily human-readable</li>
+ *     <li>{@linkplain #DECIMAL} packing for a date/time value 21-Jan-2017 14:15:16.170 is 20170121141516170</li>
+ *     <li>{@linkplain #BINARY} packing uses shifts to pack the date/time parts which is more efficient but the result
+ *     is not easily human-readable</li>
  * </ul>
  * @see #valueOf(Packing, ValidationMethod)
  * @see #BINARY
@@ -64,8 +66,9 @@ public interface DateTimePacker {
     long pack(int year, int month, int day);
     long pack(int year, int month, int day, int hour, int minute, int second);
     long pack(int year, int month, int day, int hour, int minute, int second, int milli);
-    long pack(int packedDate, Packing datePacking, int packedTime, TimePacker timePacker);
-    long pack(int packedDate, Packing datePacking, int packedMilliTime, MilliTimePacker milliTimePacker);
+    long packFromDateAndTime(int packedDate, Packing datePacking, int packedTime, Packing timePacking);
+    long packFromDateAndMilliTime(int packedDate, Packing datePacking, int packedMilliTime, Packing milliTimePacking);
+    long packFromDateTime(long packedDateTime, Packing dateTimePacking);
     int unpackYear(long packed);
     int unpackMonth(long packed);
     int unpackDay(long packed);
@@ -81,6 +84,10 @@ public interface DateTimePacker {
     LocalDateTime unpackLocalDateTime(long packed);
     long packEpochMilli(long millisSinceEpoch);
     long unpackEpochMilli(long packed);
+
+    boolean isValid(long packed);
+    long validate(long packed);
+    long validate(long packed, ValidationMethod validationMethod);
 
     /**
      * Returns a date/time packer that performs no validation.
@@ -127,23 +134,38 @@ public interface DateTimePacker {
         }
 
         @Override
-        default long pack(final int packedDate, final Packing datePacking,
-                          final int packedTime, final TimePacker timePacker) {
-            final DatePacker datePacker = DatePacker.valueOf(datePacking, validationMethod());
+        default long packFromDateAndTime(final int packedDate, final Packing datePacking,
+                                         final int packedTime, final Packing timePacking) {
+            final DatePacker dp = DatePacker.valueOf(datePacking, validationMethod());
+            final TimePacker tp = TimePacker.valueOf(timePacking, validationMethod());
             return pack(
-                    datePacker.unpackYear(packedDate), datePacker.unpackMonth(packedDate), datePacker.unpackDay(packedDate),
-                    timePacker.unpackHour(packedTime), timePacker.unpackMinute(packedTime), timePacker.unpackSecond(packedTime)
+                    dp.unpackYear(packedDate), dp.unpackMonth(packedDate), dp.unpackDay(packedDate),
+                    tp.unpackHour(packedTime), tp.unpackMinute(packedTime), tp.unpackSecond(packedTime)
             );
         }
 
         @Override
-        default long pack(final int packedDate, final Packing datePacking,
-                          final int packedMilliTime, final MilliTimePacker milliTimePacker) {
-            final DatePacker datePacker = DatePacker.valueOf(datePacking, validationMethod());
+        default long packFromDateAndMilliTime(final int packedDate, final Packing datePacking,
+                                              final int packedMilliTime, final Packing milliTimePacking) {
+            final DatePacker dp = DatePacker.valueOf(datePacking, validationMethod());
+            final MilliTimePacker mtp = MilliTimePacker.valueOf(milliTimePacking, validationMethod());
             return pack(
-                    datePacker.unpackYear(packedDate), datePacker.unpackMonth(packedDate), datePacker.unpackDay(packedDate),
-                    milliTimePacker.unpackHour(packedMilliTime), milliTimePacker.unpackMinute(packedMilliTime),
-                    milliTimePacker.unpackSecond(packedMilliTime), milliTimePacker.unpackMilli(packedMilliTime)
+                    dp.unpackYear(packedDate), dp.unpackMonth(packedDate), dp.unpackDay(packedDate),
+                    mtp.unpackHour(packedMilliTime), mtp.unpackMinute(packedMilliTime),
+                    mtp.unpackSecond(packedMilliTime), mtp.unpackMilli(packedMilliTime)
+            );
+        }
+
+        @Override
+        default long packFromDateTime(final long packedDateTime, final Packing dateTimePacking) {
+            if (dateTimePacking == packing() && validationMethod() == ValidationMethod.UNVALIDATED) {
+                return packedDateTime;
+            }
+            final DateTimePacker dtp = DateTimePacker.valueOf(dateTimePacking, validationMethod());
+            return pack(
+                    dtp.unpackYear(packedDateTime), dtp.unpackMonth(packedDateTime), dtp.unpackDay(packedDateTime),
+                    dtp.unpackHour(packedDateTime), dtp.unpackMinute(packedDateTime),
+                    dtp.unpackSecond(packedDateTime), dtp.unpackMilli(packedDateTime)
             );
         }
 
@@ -182,6 +204,33 @@ public interface DateTimePacker {
         @Override
         default long unpackEpochMilli(final long packed) {
             return Epoch.valueOf(validationMethod()).toEpochMilli(packed, this);
+        }
+
+        @Override
+        default boolean isValid(final long packed) {
+            return packed != INVALID && (packed == NULL || (
+                    isValidDate(unpackDay(packed), unpackMonth(packed), unpackDay(packed)) &&
+                    isValidTimeWithMillis(unpackHour(packed), unpackMinute(packed), unpackSecond(packed), unpackMilli(packed)))
+            );
+        }
+
+        @Override
+        default long validate(final long packed) {
+            return validate(packed, validationMethod());
+        }
+
+        @Override
+        default long validate(final long packed, final ValidationMethod validationMethod) {
+            if (packed == NULL || packed == INVALID || validationMethod == ValidationMethod.UNVALIDATED) {
+                return packed;
+            }
+            final DateValidator dv = validationMethod.dateValidator();
+            final TimeValidator tv = validationMethod.timeValidator();
+            return dv.validateDay(
+                    unpackYear(packed), unpackMonth(packed), unpackDay(packed)
+            ) != DateValidator.INVALID && tv.validateTimeWithMillis(
+                    unpackHour(packed), unpackMinute(packed), unpackSecond(packed), unpackMilli(packed)
+            ) != TimeValidator.INVALID ? packed : INVALID;
         }
 
         @Override

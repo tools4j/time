@@ -157,7 +157,7 @@ public class DatePackerTest {
             for (final DatePacker packer : PACKERS) {
                 Packing.forEach(packing -> {
                     final long packedDateTime = DateTimePacker.valueOf(packing).pack(localDate.atStartOfDay());
-                    final int packedDate = packer.pack(packedDateTime, packing);
+                    final int packedDate = packer.packFromDateTime(packedDateTime, packing);
                     final LocalDate unpacked = packer.unpackLocalDate(packedDate);
                     assertEquals(localDate, unpacked, packer + "|" + packing + ": " + localDate + " -> " + packedDate);
                 });

@@ -114,7 +114,7 @@ public class MilliTimePackerTest {
             for (final MilliTimePacker packer : PACKERS) {
                 Packing.forEach(packing -> {
                     final long packedDateTime = DateTimePacker.valueOf(packing).pack(localTime.atDate(LocalDate.now()));
-                    final int packedTime = packer.pack(packedDateTime, packing);
+                    final int packedTime = packer.packFromDateTime(packedDateTime, packing);
                     final LocalTime unpacked = packer.unpackLocalTime(packedTime);
                     assertEquals(localTime, unpacked, packer + "|" + packing + ": " + localTime + " -> " + packedTime);
                 });

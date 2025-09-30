@@ -37,6 +37,7 @@ import static org.tools4j.time.base.TimeFactors.MILLIS_PER_MINUTE;
 import static org.tools4j.time.base.TimeFactors.MILLIS_PER_SECOND;
 import static org.tools4j.time.base.TimeFactors.SECONDS_PER_HOUR;
 import static org.tools4j.time.base.TimeFactors.SECONDS_PER_MINUTE;
+import static org.tools4j.time.validate.TimeValidator.isValidTime;
 
 /**
  * Packs a time value (hour, minute, second) into an integer.  Packing and unpacking can be done with or without time
@@ -75,6 +76,10 @@ public interface TimePacker {
     long unpackSecondOfDay(int packed);
     int packEpochMilli(long millisSinceEpoch);
     long unpackMilliOfDay(int packed);
+
+    boolean isValid(int packed);
+    int validate(int packed);
+    int validate(int packed, ValidationMethod validationMethod);
 
     /**
      * Returns a time packer that performs no validation.
@@ -154,6 +159,29 @@ public interface TimePacker {
             return unpackHour(packed) * (long)MILLIS_PER_HOUR +
                     unpackMinute(packed) * (long)MILLIS_PER_MINUTE +
                     unpackSecond(packed) * (long)MILLIS_PER_SECOND;
+        }
+
+        @Override
+        default boolean isValid(final int packed) {
+            return packed != INVALID && (packed == NULL || isValidTime(
+                    unpackHour(packed), unpackMinute(packed), unpackSecond(packed)
+            ));
+        }
+
+        @Override
+        default int validate(final int packed) {
+            return validate(packed, validationMethod());
+        }
+
+        @Override
+        default int validate(final int packed, final ValidationMethod validationMethod) {
+            if (packed == NULL || packed == INVALID || validationMethod == ValidationMethod.UNVALIDATED) {
+                return packed;
+            }
+            final TimeValidator tv = validationMethod.timeValidator();
+            return tv.validateTime(
+                    unpackHour(packed), unpackMinute(packed), unpackSecond(packed)
+            ) != TimeValidator.INVALID ? packed : INVALID;
         }
 
         @Override

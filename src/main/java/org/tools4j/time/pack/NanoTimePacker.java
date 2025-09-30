@@ -25,6 +25,7 @@ package org.tools4j.time.pack;
 
 import org.tools4j.time.base.Allocation;
 import org.tools4j.time.base.Epoch;
+import org.tools4j.time.validate.DateValidator;
 import org.tools4j.time.validate.TimeValidator;
 import org.tools4j.time.validate.ValidationMethod;
 
@@ -39,6 +40,7 @@ import static org.tools4j.time.base.TimeFactors.NANOS_PER_HOUR;
 import static org.tools4j.time.base.TimeFactors.NANOS_PER_MILLI;
 import static org.tools4j.time.base.TimeFactors.NANOS_PER_MINUTE;
 import static org.tools4j.time.base.TimeFactors.NANOS_PER_SECOND;
+import static org.tools4j.time.validate.TimeValidator.isValidTimeWithNanos;
 
 /**
  * Packs a time value (hour, minute, second, nano) into a long.  Packing and unpacking can be done with or without time
@@ -64,6 +66,10 @@ public interface NanoTimePacker {
     ValidationMethod validationMethod();
     NanoTimePacker forValidationMethod(ValidationMethod validationMethod);
     long pack(int hour, int minute, int second, int nano);
+    long packFromTime(int packedTime, Packing packing, int nano);
+    long packFromMilliTime(int packedMilliTime, Packing packing);
+    long packFromDateTime(long packedDateTime, Packing packing);
+    long packFromNanoTime(long packedNanoTime, Packing packing);
     int unpackHour(long packed);
     int unpackMinute(long packed);
     int unpackSecond(long packed);
@@ -77,6 +83,10 @@ public interface NanoTimePacker {
     long unpackMilliOfDay(long packed);
     long packEpochNano(long nanosSinceEpoch);
     long unpackNanoOfDay(long packed);
+
+    boolean isValid(long packed);
+    long validate(long packed);
+    long validate(long packed, ValidationMethod validationMethod);
 
     /**
      * Returns a nano-time packer that performs no validation.
@@ -109,6 +119,36 @@ public interface NanoTimePacker {
         @Override
         default boolean unpackNull(final long packed) {
             return packed == NULL;
+        }
+
+        @Override
+        default long packFromTime(final int packedTime, final Packing packing, final int nano) {
+            final TimePacker tp = TimePacker.valueOf(packing, validationMethod());
+            return pack(tp.unpackHour(packedTime), tp.unpackMinute(packedTime), tp.unpackSecond(packedTime), nano);
+        }
+
+        @Override
+        default long packFromMilliTime(final int packedMilliTime, final Packing packing) {
+            final MilliTimePacker mtp = MilliTimePacker.valueOf(packing, validationMethod());
+            return pack(mtp.unpackHour(packedMilliTime), mtp.unpackMinute(packedMilliTime),
+                    mtp.unpackSecond(packedMilliTime), mtp.unpackMilli(packedMilliTime) * NANOS_PER_MILLI);
+        }
+
+        @Override
+        default long packFromDateTime(final long packedDateTime, final Packing packing) {
+            final DateTimePacker dtp = DateTimePacker.valueOf(packing, validationMethod());
+            return pack(dtp.unpackHour(packedDateTime), dtp.unpackMinute(packedDateTime),
+                    dtp.unpackSecond(packedDateTime), dtp.unpackMilli(packedDateTime) * NANOS_PER_MILLI);
+        }
+
+        @Override
+        default long packFromNanoTime(final long packedNanoTime, final Packing packing) {
+            if (packing == packing() && validationMethod() == ValidationMethod.UNVALIDATED) {
+                return packedNanoTime;
+            }
+            final NanoTimePacker ntp = NanoTimePacker.valueOf(packing, validationMethod());
+            return pack(ntp.unpackHour(packedNanoTime), ntp.unpackMinute(packedNanoTime),
+                    ntp.unpackSecond(packedNanoTime), ntp.unpackNano(packedNanoTime));
         }
 
         @Override
@@ -148,6 +188,29 @@ public interface NanoTimePacker {
                     unpackMinute(packed) * NANOS_PER_MINUTE +
                     unpackSecond(packed) * (long)NANOS_PER_SECOND +
                     unpackNano(packed);
+        }
+
+        @Override
+        default boolean isValid(final long packed) {
+            return packed != INVALID && (packed == NULL || isValidTimeWithNanos(
+                    unpackHour(packed), unpackMinute(packed), unpackSecond(packed), unpackNano(packed)
+            ));
+        }
+
+        @Override
+        default long validate(final long packed) {
+            return validate(packed, validationMethod());
+        }
+
+        @Override
+        default long validate(final long packed, final ValidationMethod validationMethod) {
+            if (packed == NULL || packed == INVALID || validationMethod == ValidationMethod.UNVALIDATED) {
+                return packed;
+            }
+            final TimeValidator tv = validationMethod.timeValidator();
+            return tv.validateTimeWithNanos(
+                    unpackHour(packed), unpackMinute(packed), unpackSecond(packed), unpackNano(packed)
+            ) != TimeValidator.INVALID ? packed : INVALID;
         }
 
         @Override

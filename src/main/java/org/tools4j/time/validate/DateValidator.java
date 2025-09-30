@@ -145,6 +145,11 @@ public enum DateValidator {
         return validationMethod.dateValidator();
     }
 
+    public static boolean isLeapYear(final int year) {
+        //see IsoChronology.INSTANCE.isLeapYear
+        return ((year & 3) == 0) && ((year % 100) != 0 || (year % 400) == 0);
+    }
+
     public static boolean isValidYear(final long year) {
         return YEAR_MIN <= year & year <= YEAR_MAX;
     }
@@ -158,10 +163,7 @@ public enum DateValidator {
     }
 
     public static boolean isValidDate(final int year, final int month, final int day) {
-        if (isValidYear(year) & isValidMonth(month)) {
-            return isValidDay(year, month, day);
-        }
-        return false;
+        return isValidYear(year) && isValidMonth(month) && isValidDay(year, month, day);
     }
 
     abstract public ValidationMethod validationMethod();
@@ -182,17 +184,9 @@ public enum DateValidator {
             }
             if (day <= DAY_MAX) {
                 if (month != 2) {
-                    if (day <= 30) {
-                        return true;
-                    }
-                    return (month < 8) ^ ((month & 0x1) == 0);
+                    return (day <= 30) || ((month < 8) ^ ((month & 0x1) == 0));
                 }
-                if (day == 29) {
-                    if ((year % 4) != 0) {
-                        return false;
-                    }
-                    return ((year % 100) != 0) | ((year % 400) == 0);
-                }
+                return day == 29 && isLeapYear(year);
             }
         }
         return false;

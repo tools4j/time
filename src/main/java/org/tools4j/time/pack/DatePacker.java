@@ -32,18 +32,19 @@ import java.time.LocalDate;
 import java.util.Objects;
 
 import static org.tools4j.time.base.Allocation.Type.RESULT;
+import static org.tools4j.time.validate.DateValidator.isValidDate;
 
 /**
  * Packs a date (year, month, day) into an integer.  Packing and unpacking can be done with or without date validation
- * using different {@link #validationMethod() validation methods}.  A {@link #DECIMAL} and a {@link #BINARY} packing is
- * supported and both packings preserve the natural date ordering, that is, if the packed integers are sorted then the
- * corresponding dates are also sorted.  Packing and unpacking of null values is supported via {@link #packNull()} and
- * {@link #unpackNull(int)}.
+ * using different {@linkplain #validationMethod() validation methods}.  A {@linkplain #DECIMAL} and a
+ * {@linkplain #BINARY} packing is supported and both packings preserve the natural date ordering, that is, if the
+ * packed integers are sorted then the corresponding dates are also sorted.  Packing and unpacking of null values is
+ * supported via {@link #packNull()} and {@link #unpackNull(int)}.
  * <p>
  * <i>Examples:</i>
  * <ul>
- *     <li>{@link #DECIMAL} packing for a date 21-Jan-2017 is 20170121</li>
- *     <li>{@link #BINARY} packing uses shifts to pack the date parts which is more efficient but the result is not
+ *     <li>{@linkplain #DECIMAL} packing for a date 21-Jan-2017 is 20170121</li>
+ *     <li>{@linkplain #BINARY} packing uses shifts to pack the date parts which is more efficient but the result is not
  *     easily human-readable</li>
  * </ul>
  * @see #valueOf(Packing, ValidationMethod)
@@ -51,14 +52,65 @@ import static org.tools4j.time.base.Allocation.Type.RESULT;
  * @see #DECIMAL
  */
 public interface DatePacker {
+    /**
+     * Value returned from pack methods for invalid date inputs if
+     * {@linkplain ValidationMethod#INVALIDATE_RESULT INVALIDATE_RESULT}
+     * {@linkplain #validationMethod() validation method} is in use.
+     */
     int INVALID = -1;
+    /** Value returned by {@link #packNull()} and from {@link #pack(LocalDate)} for null values. */
     int NULL = 0;
 
+    /**
+     * Returns {@linkplain Packing#DECIMAL DECIMAL} or {@linkplain Packing#BINARY BINARY} packing type.
+     *
+     * @return the packing type
+     */
     Packing packing();
+
+    /**
+     * Returns {@linkplain ValidationMethod validation method} used by this packer instance.
+     *
+     * @return the method used to validate dates
+     */
     ValidationMethod validationMethod();
+
+    /**
+     * Returns the packer instance with the same {@linkplain #packing() packing} type as {@code this} packer but using
+     * the specified {@linkplain ValidationMethod validation method} to validate dates.
+     *
+     * @param validationMethod the validation method used by the returned packer to validate dates
+     * @return the instance with packing type inherited from this packer and validation method as specified
+     */
     DatePacker forValidationMethod(ValidationMethod validationMethod);
+
+    /**
+     * Packs the given year, month and day value into an int and returns it.
+     * @param year  the four digit year such as 2017
+     * @param month the month value from 1 to 12
+     * @param day   the day of the month from 1 to no more than 31
+     * @return  the packed date value, or {@linkplain #INVALID} if the date is invalid and
+     *          {@linkplain ValidationMethod#INVALIDATE_RESULT INVALIDATE_RESULT}
+     *          {@linkplain #validationMethod() validation method} is in use
+     * @throws java.time.DateTimeException  if the specified date is invalid and
+     *                                      {@linkplain ValidationMethod#THROW_EXCEPTION THROW_EXCEPTION}
+     *                                      {@linkplain #validationMethod() validation method} is in use
+     */
     int pack(int year, int month, int day);
-    int pack(long packedDateTime, Packing packing);
+
+    /**
+     * Re-packs the date from specified packed date/time value and returns it.
+     * @param packedDateTime    the packed date/time value
+     * @param packing           the packing type of the date/time value
+     * @return  the packed date value, or {@linkplain #INVALID} if the date is invalid and
+     *          {@linkplain ValidationMethod#INVALIDATE_RESULT INVALIDATE_RESULT}
+     *          {@linkplain #validationMethod() validation method} is in use
+     * @throws java.time.DateTimeException  if the specified date is invalid and
+     *                                      {@linkplain ValidationMethod#THROW_EXCEPTION THROW_EXCEPTION}
+     *                                      {@linkplain #validationMethod() validation method} is in use
+     */
+    int packFromDateTime(long packedDateTime, Packing packing);
+    int packFromDate(int packedDate, Packing packing);
     int unpackYear(int packed);
     int unpackMonth(int packed);
     int unpackDay(int packed);
@@ -71,6 +123,10 @@ public interface DatePacker {
     long unpackEpochDay(int packed);
     int packEpochMilli(long millisSinceEpoch);
     long unpackEpochMilli(int packed);
+
+    boolean isValid(int packed);
+    int validate(int packed);
+    int validate(int packed, ValidationMethod validationMethod);
 
     /**
      * Returns a date packer that performs no validation.
@@ -113,13 +169,22 @@ public interface DatePacker {
         }
 
         @Override
-        default int pack(final long packedDateTime, final Packing packing) {
+        default int packFromDateTime(final long packedDateTime, final Packing packing) {
             final DateTimePacker unpacker = DateTimePacker.valueOf(packing, validationMethod());
             return pack(
                     unpacker.unpackYear(packedDateTime),
                     unpacker.unpackMonth(packedDateTime),
                     unpacker.unpackDay(packedDateTime)
             );
+        }
+
+        @Override
+        default int packFromDate(final int packedDate, final Packing packing) {
+            if (packing == packing() && validationMethod() == ValidationMethod.UNVALIDATED) {
+                return packedDate;
+            }
+            final DatePacker dp = DatePacker.valueOf(packing, validationMethod());
+            return pack(dp.unpackYear(packedDate), dp.unpackMonth(packedDate), dp.unpackMonth(packedDate));
         }
 
         @Override
@@ -148,6 +213,27 @@ public interface DatePacker {
         @Override
         default long unpackEpochMilli(final int packed) {
             return Epoch.valueOf(validationMethod()).toEpochMilli(packed, this);
+        }
+
+        @Override
+        default boolean isValid(final int packed) {
+            return packed != INVALID && (packed == NULL || isValidDate(unpackDay(packed), unpackMonth(packed), unpackDay(packed)));
+        }
+
+        @Override
+        default int validate(final int packed) {
+            return validate(packed, validationMethod());
+        }
+
+        @Override
+        default int validate(final int packed, final ValidationMethod validationMethod) {
+            if (packed == NULL || packed == INVALID || validationMethod == ValidationMethod.UNVALIDATED) {
+                return packed;
+            }
+            final DateValidator dateValidator = validationMethod.dateValidator();
+            return dateValidator.validateDay(
+                    unpackYear(packed), unpackMonth(packed), unpackDay(packed)
+            ) != DateValidator.INVALID ? packed : INVALID;
         }
 
         @Override
