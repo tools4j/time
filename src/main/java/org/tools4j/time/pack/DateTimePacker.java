@@ -208,9 +208,11 @@ public interface DateTimePacker {
 
         @Override
         default boolean isValid(final long packed) {
+            final DateTimePacker dtp = forValidationMethod(ValidationMethod.INVALIDATE_RESULT);
+            //NOTE: unpack day validates all date components
             return packed != INVALID && (packed == NULL || (
-                    isValidDate(unpackDay(packed), unpackMonth(packed), unpackDay(packed)) &&
-                    isValidTimeWithMillis(unpackHour(packed), unpackMinute(packed), unpackSecond(packed), unpackMilli(packed)))
+                    isValidDate(dtp.unpackYear(packed), dtp.unpackMonth(packed), dtp.unpackDay(packed)) &&
+                    isValidTimeWithMillis(dtp.unpackHour(packed), dtp.unpackMinute(packed), dtp.unpackSecond(packed), dtp.unpackMilli(packed)))
             );
         }
 
@@ -221,15 +223,16 @@ public interface DateTimePacker {
 
         @Override
         default long validate(final long packed, final ValidationMethod validationMethod) {
-            if (packed == NULL || packed == INVALID || validationMethod == ValidationMethod.UNVALIDATED) {
+            if (packed == NULL || validationMethod == ValidationMethod.UNVALIDATED) {
                 return packed;
             }
+            final DateTimePacker dtp = forValidationMethod(ValidationMethod.UNVALIDATED);
             final DateValidator dv = validationMethod.dateValidator();
             final TimeValidator tv = validationMethod.timeValidator();
             return dv.validateDay(
-                    unpackYear(packed), unpackMonth(packed), unpackDay(packed)
+                    dtp.unpackYear(packed), dtp.unpackMonth(packed), dtp.unpackDay(packed)
             ) != DateValidator.INVALID && tv.validateTimeWithMillis(
-                    unpackHour(packed), unpackMinute(packed), unpackSecond(packed), unpackMilli(packed)
+                    dtp.unpackHour(packed), dtp.unpackMinute(packed), dtp.unpackSecond(packed), dtp.unpackMilli(packed)
             ) != TimeValidator.INVALID ? packed : INVALID;
         }
 

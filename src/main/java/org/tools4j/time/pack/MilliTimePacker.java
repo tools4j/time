@@ -168,8 +168,9 @@ public interface MilliTimePacker {
 
         @Override
         default boolean isValid(final int packed) {
+            final MilliTimePacker mtp = forValidationMethod(ValidationMethod.UNVALIDATED);
             return packed != INVALID && (packed == NULL || isValidTimeWithMillis(
-                    unpackHour(packed), unpackMinute(packed), unpackSecond(packed), unpackMilli(packed)
+                    mtp.unpackHour(packed), mtp.unpackMinute(packed), mtp.unpackSecond(packed), mtp.unpackMilli(packed)
             ));
         }
 
@@ -180,12 +181,13 @@ public interface MilliTimePacker {
 
         @Override
         default int validate(final int packed, final ValidationMethod validationMethod) {
-            if (packed == NULL || packed == INVALID || validationMethod == ValidationMethod.UNVALIDATED) {
+            if (packed == NULL || validationMethod == ValidationMethod.UNVALIDATED) {
                 return packed;
             }
+            final MilliTimePacker mtp = forValidationMethod(ValidationMethod.UNVALIDATED);
             final TimeValidator tv = validationMethod.timeValidator();
             return tv.validateTimeWithMillis(
-                    unpackHour(packed), unpackMinute(packed), unpackSecond(packed), unpackMilli(packed)
+                    mtp.unpackHour(packed), mtp.unpackMinute(packed), mtp.unpackSecond(packed), mtp.unpackMilli(packed)
             ) != TimeValidator.INVALID ? packed : INVALID;
         }
 

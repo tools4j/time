@@ -41,6 +41,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -149,6 +150,47 @@ public class NanoTimePackerTest {
             for (final NanoTimePacker packer : PACKERS) {
                 final long epochNano = packer.unpackNanoOfDay(packer.pack(localTime));
                 assertEquals(localTime.toNanoOfDay(), epochNano, packer + ": " + localTime);
+            }
+        }
+
+        @Test
+        public void isValidBinary() {
+            isValid(NanoTimePacker.BINARY);
+        }
+
+        @Test
+        public void isValidDecimal() {
+            isValid(NanoTimePacker.DECIMAL);
+        }
+
+        private void isValid(final NanoTimePacker packer) {
+            final long packed = packer.pack(localTime);
+            assertNotEquals(NanoTimePacker.INVALID, packed, "should not be invalid");
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                final NanoTimePacker validatingPacker = packer.forValidationMethod(validationMethod);
+                assertTrue(validatingPacker.isValid(packed), localTime + " should be valid");
+            }
+        }
+
+        @Test
+        public void validateBinary() {
+            validate(NanoTimePacker.BINARY);
+        }
+
+        @Test
+        public void validateDecimal() {
+            validate(NanoTimePacker.DECIMAL);
+        }
+
+        private void validate(final NanoTimePacker packer) {
+            final long packed = packer.pack(localTime);
+            assertNotEquals(NanoTimePacker.INVALID, packed, "should not be invalid");
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                final NanoTimePacker validatingPacker = packer.forValidationMethod(validationMethod);
+                assertEquals(packed, validatingPacker.validate(packed),
+                        "validate(..) for " + localTime);
+                assertEquals(packed, packer.validate(packed, validationMethod),
+                        "validate(.., " + validationMethod + ") for " + localTime);
             }
         }
     }
@@ -281,6 +323,59 @@ public class NanoTimePackerTest {
             final long inv = NanoTimePacker.INVALID;
             assertTrue(h == inv || m == inv || s == inv || l == inv, "at least one should be invalid");
         }
+
+        @Test
+        public void isValidBinary() {
+            isValid(NanoTimePacker.BINARY);
+        }
+
+        @Test
+        public void isValidDecimal() {
+            isValid(NanoTimePacker.DECIMAL);
+        }
+
+        private void isValid(final NanoTimePacker packer) {
+            final long packed = packer.pack(hour, minute, second, nano);
+            assertNotEquals(NanoTimePacker.INVALID, packed, "should not be invalid");
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                final NanoTimePacker validatingPacker = packer.forValidationMethod(validationMethod);
+                assertFalse(validatingPacker.isValid(packed));
+            }
+        }
+
+        @Test
+        public void validateBinary() {
+            validate(NanoTimePacker.BINARY);
+        }
+
+        @Test
+        public void validateDecimal() {
+            validate(NanoTimePacker.DECIMAL);
+        }
+
+        private void validate(final NanoTimePacker packer) {
+            final long packed = packer.pack(hour, minute, second, nano);
+            assertNotEquals(NanoTimePacker.INVALID, packed, "should not be invalid");
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                final NanoTimePacker validatingPacker = packer.forValidationMethod(validationMethod);
+                switch (validationMethod) {
+                    case UNVALIDATED:
+                        assertEquals(packed, validatingPacker.validate(packed));
+                        assertEquals(packed, packer.validate(packed, validationMethod));
+                        break;
+                    case INVALIDATE_RESULT:
+                        assertEquals(NanoTimePacker.INVALID, validatingPacker.validate(packed));
+                        assertEquals(NanoTimePacker.INVALID, packer.validate(packed, validationMethod));
+                        break;
+                    case THROW_EXCEPTION:
+                        assertThrowsExactly(DateTimeException.class, () -> validatingPacker.validate(packed));
+                        assertThrowsExactly(DateTimeException.class, () -> packer.validate(packed, validationMethod));
+                        break;
+                    default:
+                        throw new RuntimeException("Unsupported validation method: " + validationMethod);
+                }
+            }
+        }
     }
 
     @Nested
@@ -297,6 +392,32 @@ public class NanoTimePackerTest {
             final boolean isNull = packer.unpackNull(packed);
             assertEquals(NanoTimePacker.NULL, packed, packer + ": pack null");
             assertTrue(isNull, packer + ": unpack null");
+        }
+
+        @Test
+        public void validateNull() {
+            final NanoTimePacker packer = NanoTimePacker.valueOf(packing);
+            assertTrue(packer.isValid(NanoTimePacker.NULL));
+            assertEquals(NanoTimePacker.NULL, packer.validate(packer.packNull()));
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                assertEquals(NanoTimePacker.NULL, packer.validate(packer.packNull(), validationMethod));
+            }
+        }
+
+        @Test
+        public void validateInvalid() {
+            final NanoTimePacker packer = NanoTimePacker.valueOf(packing);
+            assertFalse(packer.isValid(NanoTimePacker.INVALID));
+            assertEquals(NanoTimePacker.INVALID, packer.validate(NanoTimePacker.INVALID));
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                if (validationMethod == THROW_EXCEPTION) {
+                    assertThrowsExactly(DateTimeException.class, () ->
+                            packer.validate(NanoTimePacker.INVALID, validationMethod)
+                    );
+                } else {
+                    assertEquals(NanoTimePacker.INVALID, packer.validate(NanoTimePacker.INVALID, validationMethod));
+                }
+            }
         }
 
         @Test

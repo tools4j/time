@@ -38,6 +38,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -171,6 +172,47 @@ public class DatePackerTest {
                 assertEquals(localDate.toEpochDay() * MILLIS_PER_DAY, epochMilli, packer + ": " + localDate);
             }
         }
+
+        @Test
+        public void isValidBinary() {
+            isValid(DatePacker.BINARY);
+        }
+
+        @Test
+        public void isValidDecimal() {
+            isValid(DatePacker.DECIMAL);
+        }
+
+        private void isValid(final DatePacker packer) {
+            final int packed = packer.pack(localDate);
+            assertNotEquals(DatePacker.INVALID, packed, "should not be invalid");
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                final DatePacker validatingPacker = packer.forValidationMethod(validationMethod);
+                assertTrue(validatingPacker.isValid(packed), localDate + " should be valid");
+            }
+        }
+
+        @Test
+        public void validateBinary() {
+            validate(DatePacker.BINARY);
+        }
+
+        @Test
+        public void validateDecimal() {
+            validate(DatePacker.DECIMAL);
+        }
+
+        private void validate(final DatePacker packer) {
+            final int packed = packer.pack(localDate);
+            assertNotEquals(DatePacker.INVALID, packed, "should not be invalid");
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                final DatePacker validatingPacker = packer.forValidationMethod(validationMethod);
+                assertEquals(packed, validatingPacker.validate(packed),
+                        "validate(..) for " + localDate);
+                assertEquals(packed, packer.validate(packed, validationMethod),
+                        "validate(.., " + validationMethod + ") for " + localDate);
+            }
+        }
     }
 
     @Nested
@@ -257,6 +299,59 @@ public class DatePackerTest {
             final int invalid = DatePacker.DECIMAL.forValidationMethod(INVALIDATE_RESULT).unpackDay(packed);
             assertEquals(DatePacker.INVALID, invalid, "should be invalid");
         }
+
+        @Test
+        public void isValidBinary() {
+            isValid(DatePacker.BINARY);
+        }
+
+        @Test
+        public void isValidDecimal() {
+            isValid(DatePacker.DECIMAL);
+        }
+
+        private void isValid(final DatePacker packer) {
+            final int packed = packer.pack(year, month, day);
+            assertNotEquals(DatePacker.INVALID, packed, "should not be invalid");
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                final DatePacker validatingPacker = packer.forValidationMethod(validationMethod);
+                assertFalse(validatingPacker.isValid(packed));
+            }
+        }
+
+        @Test
+        public void validateBinary() {
+            validate(DatePacker.BINARY);
+        }
+
+        @Test
+        public void validateDecimal() {
+            validate(DatePacker.DECIMAL);
+        }
+
+        private void validate(final DatePacker packer) {
+            final int packed = packer.pack(year, month, day);
+            assertNotEquals(DatePacker.INVALID, packed, "should not be invalid");
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                final DatePacker validatingPacker = packer.forValidationMethod(validationMethod);
+                switch (validationMethod) {
+                    case UNVALIDATED:
+                        assertEquals(packed, validatingPacker.validate(packed));
+                        assertEquals(packed, packer.validate(packed, validationMethod));
+                        break;
+                    case INVALIDATE_RESULT:
+                        assertEquals(DatePacker.INVALID, validatingPacker.validate(packed));
+                        assertEquals(DatePacker.INVALID, packer.validate(packed, validationMethod));
+                        break;
+                    case THROW_EXCEPTION:
+                        assertThrowsExactly(DateTimeException.class, () -> validatingPacker.validate(packed));
+                        assertThrowsExactly(DateTimeException.class, () -> packer.validate(packed, validationMethod));
+                        break;
+                    default:
+                        throw new RuntimeException("Unsupported validation method: " + validationMethod);
+                }
+            }
+        }
     }
 
     @Nested
@@ -277,6 +372,32 @@ public class DatePackerTest {
             assertEquals(0, packed2, packer + ".pack(null)");
             assertTrue(isNull1, packer + ":unpackNull(packNull())");
             assertTrue(isNull2, packer + ":unpackNull(pack(null))");
+        }
+
+        @Test
+        public void validateNull() {
+            final DatePacker packer = DatePacker.valueOf(packing);
+            assertTrue(packer.isValid(DatePacker.NULL));
+            assertEquals(DatePacker.NULL, packer.validate(packer.packNull()));
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                assertEquals(DatePacker.NULL, packer.validate(packer.packNull(), validationMethod));
+            }
+        }
+
+        @Test
+        public void validateInvalid() {
+            final DatePacker packer = DatePacker.valueOf(packing);
+            assertFalse(packer.isValid(DatePacker.INVALID));
+            assertEquals(DatePacker.INVALID, packer.validate(DatePacker.INVALID));
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                if (validationMethod == THROW_EXCEPTION) {
+                    assertThrowsExactly(DateTimeException.class, () ->
+                            packer.validate(DatePacker.INVALID, validationMethod)
+                    );
+                } else {
+                    assertEquals(DatePacker.INVALID, packer.validate(DatePacker.INVALID, validationMethod));
+                }
+            }
         }
 
         @Test

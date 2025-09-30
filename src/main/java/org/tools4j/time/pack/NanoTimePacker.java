@@ -25,7 +25,6 @@ package org.tools4j.time.pack;
 
 import org.tools4j.time.base.Allocation;
 import org.tools4j.time.base.Epoch;
-import org.tools4j.time.validate.DateValidator;
 import org.tools4j.time.validate.TimeValidator;
 import org.tools4j.time.validate.ValidationMethod;
 
@@ -192,8 +191,9 @@ public interface NanoTimePacker {
 
         @Override
         default boolean isValid(final long packed) {
+            final NanoTimePacker ntp = forValidationMethod(ValidationMethod.UNVALIDATED);
             return packed != INVALID && (packed == NULL || isValidTimeWithNanos(
-                    unpackHour(packed), unpackMinute(packed), unpackSecond(packed), unpackNano(packed)
+                    ntp.unpackHour(packed), ntp.unpackMinute(packed), ntp.unpackSecond(packed), ntp.unpackNano(packed)
             ));
         }
 
@@ -204,12 +204,13 @@ public interface NanoTimePacker {
 
         @Override
         default long validate(final long packed, final ValidationMethod validationMethod) {
-            if (packed == NULL || packed == INVALID || validationMethod == ValidationMethod.UNVALIDATED) {
+            if (packed == NULL || validationMethod == ValidationMethod.UNVALIDATED) {
                 return packed;
             }
+            final NanoTimePacker ntp = forValidationMethod(ValidationMethod.UNVALIDATED);
             final TimeValidator tv = validationMethod.timeValidator();
             return tv.validateTimeWithNanos(
-                    unpackHour(packed), unpackMinute(packed), unpackSecond(packed), unpackNano(packed)
+                    ntp.unpackHour(packed), ntp.unpackMinute(packed), ntp.unpackSecond(packed), ntp.unpackNano(packed)
             ) != TimeValidator.INVALID ? packed : INVALID;
         }
 

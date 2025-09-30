@@ -39,6 +39,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -156,6 +157,46 @@ public class TimePackerTest {
             }
         }
 
+        @Test
+        public void isValidBinary() {
+            isValid(TimePacker.BINARY);
+        }
+
+        @Test
+        public void isValidDecimal() {
+            isValid(TimePacker.DECIMAL);
+        }
+
+        private void isValid(final TimePacker packer) {
+            final int packed = packer.pack(localTime);
+            assertNotEquals(TimePacker.INVALID, packed, "should not be invalid");
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                final TimePacker validatingPacker = packer.forValidationMethod(validationMethod);
+                assertTrue(validatingPacker.isValid(packed), localTime + " should be valid");
+            }
+        }
+
+        @Test
+        public void validateBinary() {
+            validate(TimePacker.BINARY);
+        }
+
+        @Test
+        public void validateDecimal() {
+            validate(TimePacker.DECIMAL);
+        }
+
+        private void validate(final TimePacker packer) {
+            final int packed = packer.pack(localTime);
+            assertNotEquals(TimePacker.INVALID, packed, "should not be invalid");
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                final TimePacker validatingPacker = packer.forValidationMethod(validationMethod);
+                assertEquals(packed, validatingPacker.validate(packed),
+                        "validate(..) for " + localTime);
+                assertEquals(packed, packer.validate(packed, validationMethod),
+                        "validate(.., " + validationMethod + ") for " + localTime);
+            }
+        }
     }
 
     @Nested
@@ -280,6 +321,59 @@ public class TimePackerTest {
             final int inv = TimePacker.INVALID;
             assertTrue(h == inv || m == inv || s == inv, "at least one should be invalid");
         }
+
+        @Test
+        public void isValidBinary() {
+            isValid(TimePacker.BINARY);
+        }
+
+        @Test
+        public void isValidDecimal() {
+            isValid(TimePacker.DECIMAL);
+        }
+
+        private void isValid(final TimePacker packer) {
+            final int packed = packer.pack(hour, minute, second);
+            assertNotEquals(TimePacker.INVALID, packed, "should not be invalid");
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                final TimePacker validatingPacker = packer.forValidationMethod(validationMethod);
+                assertFalse(validatingPacker.isValid(packed));
+            }
+        }
+
+        @Test
+        public void validateBinary() {
+            validate(TimePacker.BINARY);
+        }
+
+        @Test
+        public void validateDecimal() {
+            validate(TimePacker.DECIMAL);
+        }
+
+        private void validate(final TimePacker packer) {
+            final int packed = packer.pack(hour, minute, second);
+            assertNotEquals(TimePacker.INVALID, packed, "should not be invalid");
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                final TimePacker validatingPacker = packer.forValidationMethod(validationMethod);
+                switch (validationMethod) {
+                    case UNVALIDATED:
+                        assertEquals(packed, validatingPacker.validate(packed));
+                        assertEquals(packed, packer.validate(packed, validationMethod));
+                        break;
+                    case INVALIDATE_RESULT:
+                        assertEquals(TimePacker.INVALID, validatingPacker.validate(packed));
+                        assertEquals(TimePacker.INVALID, packer.validate(packed, validationMethod));
+                        break;
+                    case THROW_EXCEPTION:
+                        assertThrowsExactly(DateTimeException.class, () -> validatingPacker.validate(packed));
+                        assertThrowsExactly(DateTimeException.class, () -> packer.validate(packed, validationMethod));
+                        break;
+                    default:
+                        throw new RuntimeException("Unsupported validation method: " + validationMethod);
+                }
+            }
+        }
     }
 
     @Nested
@@ -296,6 +390,32 @@ public class TimePackerTest {
             final boolean isNull = packer.unpackNull(packed);
             assertEquals(TimePacker.NULL, packed, packer + ": pack null");
             assertTrue(isNull, packer + ": unpack null");
+        }
+
+        @Test
+        public void validateNull() {
+            final TimePacker packer = TimePacker.valueOf(packing);
+            assertTrue(packer.isValid(TimePacker.NULL));
+            assertEquals(TimePacker.NULL, packer.validate(packer.packNull()));
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                assertEquals(TimePacker.NULL, packer.validate(packer.packNull(), validationMethod));
+            }
+        }
+
+        @Test
+        public void validateInvalid() {
+            final TimePacker packer = TimePacker.valueOf(packing);
+            assertFalse(packer.isValid(TimePacker.INVALID));
+            assertEquals(TimePacker.INVALID, packer.validate(TimePacker.INVALID));
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                if (validationMethod == THROW_EXCEPTION) {
+                    assertThrowsExactly(DateTimeException.class, () ->
+                            packer.validate(TimePacker.INVALID, validationMethod)
+                    );
+                } else {
+                    assertEquals(TimePacker.INVALID, packer.validate(TimePacker.INVALID, validationMethod));
+                }
+            }
         }
 
         @Test

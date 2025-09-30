@@ -40,6 +40,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -138,6 +139,47 @@ public class MilliTimePackerTest {
             for (final MilliTimePacker packer : PACKERS) {
                 final long epochMilli = packer.unpackMilliOfDay(packer.pack(localTime));
                 assertEquals(localTime.toNanoOfDay() / NANOS_PER_MILLI, epochMilli, packer + ": " + localTime);
+            }
+        }
+
+        @Test
+        public void isValidBinary() {
+            isValid(MilliTimePacker.BINARY);
+        }
+
+        @Test
+        public void isValidDecimal() {
+            isValid(MilliTimePacker.DECIMAL);
+        }
+
+        private void isValid(final MilliTimePacker packer) {
+            final int packed = packer.pack(localTime);
+            assertNotEquals(MilliTimePacker.INVALID, packed, "should not be invalid");
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                final MilliTimePacker validatingPacker = packer.forValidationMethod(validationMethod);
+                assertTrue(validatingPacker.isValid(packed), localTime + " should be valid");
+            }
+        }
+
+        @Test
+        public void validateBinary() {
+            validate(MilliTimePacker.BINARY);
+        }
+
+        @Test
+        public void validateDecimal() {
+            validate(MilliTimePacker.DECIMAL);
+        }
+
+        private void validate(final MilliTimePacker packer) {
+            final int packed = packer.pack(localTime);
+            assertNotEquals(MilliTimePacker.INVALID, packed, "should not be invalid");
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                final MilliTimePacker validatingPacker = packer.forValidationMethod(validationMethod);
+                assertEquals(packed, validatingPacker.validate(packed),
+                        "validate(..) for " + localTime);
+                assertEquals(packed, packer.validate(packed, validationMethod),
+                        "validate(.., " + validationMethod + ") for " + localTime);
             }
         }
     }
@@ -270,6 +312,59 @@ public class MilliTimePackerTest {
             final int inv = MilliTimePacker.INVALID;
             assertTrue(h == inv || m == inv || s == inv || l == inv, "at least one should be invalid");
         }
+
+        @Test
+        public void isValidBinary() {
+            isValid(MilliTimePacker.BINARY);
+        }
+
+        @Test
+        public void isValidDecimal() {
+            isValid(MilliTimePacker.DECIMAL);
+        }
+
+        private void isValid(final MilliTimePacker packer) {
+            final int packed = packer.pack(hour, minute, second, milli);
+            assertNotEquals(MilliTimePacker.INVALID, packed, "should not be invalid");
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                final MilliTimePacker validatingPacker = packer.forValidationMethod(validationMethod);
+                assertFalse(validatingPacker.isValid(packed));
+            }
+        }
+
+        @Test
+        public void validateBinary() {
+            validate(MilliTimePacker.BINARY);
+        }
+
+        @Test
+        public void validateDecimal() {
+            validate(MilliTimePacker.DECIMAL);
+        }
+
+        private void validate(final MilliTimePacker packer) {
+            final int packed = packer.pack(hour, minute, second, milli);
+            assertNotEquals(MilliTimePacker.INVALID, packed, "should not be invalid");
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                final MilliTimePacker validatingPacker = packer.forValidationMethod(validationMethod);
+                switch (validationMethod) {
+                    case UNVALIDATED:
+                        assertEquals(packed, validatingPacker.validate(packed));
+                        assertEquals(packed, packer.validate(packed, validationMethod));
+                        break;
+                    case INVALIDATE_RESULT:
+                        assertEquals(MilliTimePacker.INVALID, validatingPacker.validate(packed));
+                        assertEquals(MilliTimePacker.INVALID, packer.validate(packed, validationMethod));
+                        break;
+                    case THROW_EXCEPTION:
+                        assertThrowsExactly(DateTimeException.class, () -> validatingPacker.validate(packed));
+                        assertThrowsExactly(DateTimeException.class, () -> packer.validate(packed, validationMethod));
+                        break;
+                    default:
+                        throw new RuntimeException("Unsupported validation method: " + validationMethod);
+                }
+            }
+        }
     }
 
     @Nested
@@ -286,6 +381,32 @@ public class MilliTimePackerTest {
             final boolean isNull = packer.unpackNull(packed);
             assertEquals(MilliTimePacker.NULL, packed, packer + ": pack null");
             assertTrue(isNull, packer + ": unpack null");
+        }
+
+        @Test
+        public void validateNull() {
+            final MilliTimePacker packer = MilliTimePacker.valueOf(packing);
+            assertTrue(packer.isValid(MilliTimePacker.NULL));
+            assertEquals(MilliTimePacker.NULL, packer.validate(packer.packNull()));
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                assertEquals(MilliTimePacker.NULL, packer.validate(packer.packNull(), validationMethod));
+            }
+        }
+
+        @Test
+        public void validateInvalid() {
+            final MilliTimePacker packer = MilliTimePacker.valueOf(packing);
+            assertFalse(packer.isValid(MilliTimePacker.INVALID));
+            assertEquals(MilliTimePacker.INVALID, packer.validate(MilliTimePacker.INVALID));
+            for (final ValidationMethod validationMethod : ValidationMethod.values()) {
+                if (validationMethod == THROW_EXCEPTION) {
+                    assertThrowsExactly(DateTimeException.class, () ->
+                            packer.validate(MilliTimePacker.INVALID, validationMethod)
+                    );
+                } else {
+                    assertEquals(MilliTimePacker.INVALID, packer.validate(MilliTimePacker.INVALID, validationMethod));
+                }
+            }
         }
 
         @Test

@@ -163,8 +163,9 @@ public interface TimePacker {
 
         @Override
         default boolean isValid(final int packed) {
+            final TimePacker tp = forValidationMethod(ValidationMethod.UNVALIDATED);
             return packed != INVALID && (packed == NULL || isValidTime(
-                    unpackHour(packed), unpackMinute(packed), unpackSecond(packed)
+                    tp.unpackHour(packed), tp.unpackMinute(packed), tp.unpackSecond(packed)
             ));
         }
 
@@ -175,12 +176,13 @@ public interface TimePacker {
 
         @Override
         default int validate(final int packed, final ValidationMethod validationMethod) {
-            if (packed == NULL || packed == INVALID || validationMethod == ValidationMethod.UNVALIDATED) {
+            if (packed == NULL || validationMethod == ValidationMethod.UNVALIDATED) {
                 return packed;
             }
+            final TimePacker tp = forValidationMethod(ValidationMethod.UNVALIDATED);
             final TimeValidator tv = validationMethod.timeValidator();
             return tv.validateTime(
-                    unpackHour(packed), unpackMinute(packed), unpackSecond(packed)
+                    tp.unpackHour(packed), tp.unpackMinute(packed), tp.unpackSecond(packed)
             ) != TimeValidator.INVALID ? packed : INVALID;
         }
 

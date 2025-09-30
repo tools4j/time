@@ -32,7 +32,6 @@ import java.time.LocalDate;
 import java.util.Objects;
 
 import static org.tools4j.time.base.Allocation.Type.RESULT;
-import static org.tools4j.time.validate.DateValidator.isValidDate;
 
 /**
  * Packs a date (year, month, day) into an integer.  Packing and unpacking can be done with or without date validation
@@ -217,7 +216,9 @@ public interface DatePacker {
 
         @Override
         default boolean isValid(final int packed) {
-            return packed != INVALID && (packed == NULL || isValidDate(unpackDay(packed), unpackMonth(packed), unpackDay(packed)));
+            final DatePacker unpacker = forValidationMethod(ValidationMethod.INVALIDATE_RESULT);
+            //NOTE: unpack day validates all date components
+            return packed != INVALID && (packed == NULL || unpacker.unpackDay(packed) != DateValidator.INVALID);
         }
 
         @Override
@@ -227,13 +228,12 @@ public interface DatePacker {
 
         @Override
         default int validate(final int packed, final ValidationMethod validationMethod) {
-            if (packed == NULL || packed == INVALID || validationMethod == ValidationMethod.UNVALIDATED) {
+            if (packed == NULL || validationMethod == ValidationMethod.UNVALIDATED) {
                 return packed;
             }
-            final DateValidator dateValidator = validationMethod.dateValidator();
-            return dateValidator.validateDay(
-                    unpackYear(packed), unpackMonth(packed), unpackDay(packed)
-            ) != DateValidator.INVALID ? packed : INVALID;
+            final DatePacker unpacker = forValidationMethod(validationMethod);
+            //NOTE: unpack day validates all date components
+            return unpacker.unpackDay(packed) != DateValidator.INVALID ? packed : INVALID;
         }
 
         @Override
